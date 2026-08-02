@@ -1,8 +1,21 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import type { Api, ChapterMeta, ImportResult, Progress, TocUpdateOptions } from '../shared/types'
 
 // Custom APIs for renderer
-const api = {}
+const api: Api = {
+  openFileDialog: (): Promise<string[]> => ipcRenderer.invoke('dialog:openFiles'),
+  importBooks: (paths: string[]): Promise<ImportResult[]> => ipcRenderer.invoke('books:import', paths),
+  getBooks: () => ipcRenderer.invoke('books:list'),
+  openBook: (id: string) => ipcRenderer.invoke('books:open', id),
+  getChapter: (bookId: string, chapterIndex: number): Promise<string> =>
+    ipcRenderer.invoke('books:getChapter', bookId, chapterIndex),
+  saveProgress: (bookId: string, progress: Omit<Progress, 'updatedAt'>): Promise<void> =>
+    ipcRenderer.invoke('books:saveProgress', bookId, progress),
+  updateToc: (bookId: string, options: TocUpdateOptions): Promise<ChapterMeta[]> =>
+    ipcRenderer.invoke('books:updateToc', bookId, options),
+  deleteBook: (id: string): Promise<void> => ipcRenderer.invoke('books:delete', id)
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
