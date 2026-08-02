@@ -2,7 +2,7 @@ import { build } from 'vite'
 import react from '@vitejs/plugin-react'
 import { execFileSync } from 'node:child_process'
 import { createRequire } from 'node:module'
-import { existsSync } from 'node:fs'
+import { existsSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -10,6 +10,11 @@ const require = createRequire(import.meta.url)
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outDir = resolve(root, 'out')
 const tscBin = require.resolve('typescript/bin/tsc')
+
+// Clean previous output (avoids stale files, e.g. compiled tests)
+if (existsSync(outDir)) {
+  rmSync(outDir, { recursive: true, force: true })
+}
 
 // 1) Main + preload: compile TypeScript to CommonJS (out/main, out/preload)
 console.log('[build] tsc main+preload -> out/')

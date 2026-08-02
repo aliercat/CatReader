@@ -15,5 +15,6 @@
     "rootDir": "src",
     "outDir": "out"
   },
-  "include": ["src/main/**/*", "src/preload/**/*"]
+  "include": ["src/main/**/*", "src/preload/**/*"],
+  "exclude": ["src/**/__tests__/**"]
 }
