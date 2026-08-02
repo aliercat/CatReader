@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+out/
+release/
+coverage/
+.vite/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# env / secrets
+.env
+.env.*
+
+# workspace scratch
+work/
