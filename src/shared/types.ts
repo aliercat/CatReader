@@ -23,6 +23,12 @@ export interface BookMeta {
   garbled?: boolean
 }
 
+/** 书架条目：书籍元数据 + 阅读进度摘要 */
+export interface BookshelfItem extends BookMeta {
+  /** 已读百分比（1-100）；从未阅读或仍为 0% 时不提供 */
+  readPercent?: number
+}
+
 export interface ChapterMeta {
   index: number
   title: string
@@ -81,7 +87,7 @@ export interface ImportResult {
 export interface Api {
   openFileDialog(): Promise<string[]>
   importBooks(paths: string[]): Promise<ImportResult[]>
-  getBooks(): Promise<BookMeta[]>
+  getBooks(): Promise<BookshelfItem[]>
   openBook(id: string): Promise<BookDetail>
   getChapter(bookId: string, chapterIndex: number): Promise<string>
   saveProgress(bookId: string, progress: Omit<Progress, 'updatedAt'>): Promise<void>

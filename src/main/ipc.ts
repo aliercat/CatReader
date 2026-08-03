@@ -27,7 +27,14 @@ export function registerIpc({ bookStore, progressStore, importService }: Service
 
   ipcMain.handle('books:import', (_event, paths: string[]) => importService.importFiles(paths))
 
-  ipcMain.handle('books:list', () => bookStore.list())
+  ipcMain.handle('books:list', () =>
+    bookStore.list().map((b) => {
+      const p = progressStore.get(b.id)
+      if (!p) return b
+      const percent = Math.min(100, Math.round((p.chapterIndex / Math.max(1, b.chapterCount)) * 100))
+      return percent > 0 ? { ...b, readPercent: percent } : b
+    })
+  )
 
   ipcMain.handle('books:open', (_event, id: string) => {
     const book = bookStore.get(id)
