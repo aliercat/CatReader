@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { JSX } from 'react'
 import type { BookshelfItem, UpdateMode, UpdateState } from '../../../shared/types'
 import type { UiThemeMode } from '../lib/ui-theme'
 import { CoverPlaceholder } from '../components/CoverPlaceholder'
@@ -13,6 +14,26 @@ import AppMenu from '../components/AppMenu'
 import AboutDialog from '../components/AboutDialog'
 import UpdateBar from '../components/UpdateBar'
 import WindowControls from '../components/WindowControls'
+import Dropdown from '../components/Dropdown'
+
+function AddBookCard({ onAdd }: { onAdd: () => void }): JSX.Element {
+  return (
+    <button className="book-add" onClick={onAdd} aria-label="导入小说" title="导入小说">
+      <svg
+        viewBox="0 0 24 24"
+        width="28"
+        height="28"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+  )
+}
 
 export default function Bookshelf({
   onOpen,
@@ -99,11 +120,6 @@ export default function Bookshelf({
   return (
     <div className="shelf-page">
       <header className="shelf-header">
-        <div className="shelf-header-left">
-          <button className="btn btn-import" onClick={() => void handleImport()}>
-            导入小说
-          </button>
-        </div>
         <WindowControls />
       </header>
       <div className="shelf">
@@ -116,26 +132,26 @@ export default function Bookshelf({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <select
-              className="shelf-select"
-              aria-label="格式"
+            <Dropdown
+              ariaLabel="格式"
               value={format}
-              onChange={(e) => setFormat(e.target.value as ShelfFormatFilter)}
-            >
-              <option value="all">全部格式</option>
-              <option value="txt">TXT</option>
-              <option value="epub">EPUB</option>
-            </select>
-            <select
-              className="shelf-select"
-              aria-label="排序"
+              options={[
+                { value: 'all', label: '全部格式' },
+                { value: 'txt', label: 'TXT' },
+                { value: 'epub', label: 'EPUB' }
+              ]}
+              onChange={(v) => setFormat(v)}
+            />
+            <Dropdown
+              ariaLabel="排序"
               value={sort}
-              onChange={(e) => setSort(e.target.value as ShelfSort)}
-            >
-              <option value="recent">最近阅读</option>
-              <option value="imported">最近导入</option>
-              <option value="title">书名</option>
-            </select>
+              options={[
+                { value: 'recent', label: '最近阅读' },
+                { value: 'imported', label: '最近导入' },
+                { value: 'title', label: '书名' }
+              ]}
+              onChange={(v) => setSort(v)}
+            />
           </div>
         )}
         {notice && <div className="notice">{notice}</div>}
@@ -147,10 +163,15 @@ export default function Bookshelf({
         {loading ? (
           <p className="empty">加载中…</p>
         ) : books.length === 0 ? (
-          <div className="empty">
-            <p className="empty-title">书架还是空的</p>
-            <p className="empty-sub">点击左上角“导入小说”，支持 txt / epub 格式。</p>
-          </div>
+          <>
+            <div className="empty">
+              <p className="empty-title">书架还是空的</p>
+              <p className="empty-sub">点击下方虚线卡片，导入 txt / epub 小说。</p>
+            </div>
+            <div className="book-grid">
+              <AddBookCard onAdd={() => void handleImport()} />
+            </div>
+          </>
         ) : visible.length === 0 ? (
           <div className="empty">
             <p className="empty-title">没有匹配的书籍</p>
@@ -176,6 +197,7 @@ export default function Bookshelf({
                 </button>
               </div>
             ))}
+            <AddBookCard onAdd={() => void handleImport()} />
           </div>
         )}
       </div>

@@ -159,7 +159,7 @@ button {
 .shelf-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   padding: 10px 12px 0 16px;
 }
@@ -216,6 +216,31 @@ button {
 .book-cover:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.book-add {
+  width: 150px;
+  height: 210px;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.book-add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--active-bg);
+  transform: translateY(-3px);
 }
 
 .book-cover img {
@@ -1029,44 +1054,11 @@ mark {
 .shelf-header .btn,
 .shelf-header .app-menu,
 .shelf-header input,
-.shelf-header-left,
 .reader-topbar .btn,
 .reader-topbar .app-menu,
 .reader-topbar input,
 .window-controls {
   -webkit-app-region: no-drag;
-}
-
-.shelf-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* 顶部栏按钮：无边框扁平风格 */
-.shelf-header .btn {
-  border: none;
-  background: transparent;
-  color: var(--text);
-  border-radius: 8px;
-  padding: 6px 10px;
-}
-
-.shelf-header .btn:hover:not(:disabled) {
-  background: var(--hover);
-  color: var(--text);
-}
-
-.shelf-header .btn-import {
-  color: var(--accent);
-}
-
-.shelf-header .btn-import:hover:not(:disabled) {
-  color: var(--accent-dark);
-}
-
-.shelf-header .btn-menu:hover:not(:disabled) {
-  color: var(--accent);
 }
 
 .window-controls {
@@ -1115,6 +1107,15 @@ mark {
   justify-content: center;
   gap: 6px;
   padding: 6px 8px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+}
+
+.btn-menu:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--accent);
 }
 
 .btn-menu svg {
@@ -1279,29 +1280,79 @@ mark {
 }
 
 /* ---------- shelf filters ---------- */
-.shelf-select {
-  appearance: none;
-  -webkit-appearance: none;
+.dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: none;
-  background-color: transparent;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a919c' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
+  background: transparent;
   color: var(--text);
   font-size: 13px;
   font-family: inherit;
-  padding: 7px 26px 7px 12px;
+  padding: 7px 12px;
   border-radius: 8px;
   cursor: pointer;
-  outline: none;
+  transition: background 0.15s ease;
 }
 
-.shelf-select:hover,
-.shelf-select:focus {
-  background-color: var(--hover);
+.dropdown-trigger:hover,
+.dropdown.open .dropdown-trigger {
+  background: var(--hover);
 }
 
-.shelf-select option {
-  color: var(--text);
+.dropdown-trigger svg {
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.dropdown.open .dropdown-trigger svg {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  min-width: 150px;
   background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background: var(--hover);
+}
+
+.dropdown-item.selected {
+  color: var(--accent);
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
 }
