@@ -1113,9 +1113,26 @@ mark {
 }
 
 .btn-menu {
-  font-size: 15px;
-  line-height: 1;
-  padding: 5px 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-menu svg {
+  width: 15px;
+  height: 15px;
+}
+
+.btn-menu:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--accent);
+}
+
+.app-menu.open .btn-menu {
+  background: var(--active-bg);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .menu-popover {
