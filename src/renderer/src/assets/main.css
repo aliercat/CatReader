@@ -287,7 +287,6 @@ button {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  height: 100%;
 }
 
 .reader-footer {
@@ -308,6 +307,13 @@ button {
   visibility: hidden;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.tool-value {
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 44px;
+  text-align: center;
 }
 
 /* ---------- toc sidebar ---------- */

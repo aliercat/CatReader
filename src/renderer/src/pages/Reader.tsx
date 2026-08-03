@@ -7,6 +7,8 @@ import type { InsertPosition } from '../components/TocEditor'
 const DEFAULT_FONT_SIZE = 18
 const DEFAULT_LINE_HEIGHT = 1.8
 const DEFAULT_PAGE_WIDTH = 720
+const DEFAULT_COLUMNS = 1
+const COLUMN_GAP = 24
 const PAGE_HEIGHT_MARGIN = 240
 
 export default function Reader({ bookId, onBack }: { bookId: string; onBack: () => void }) {
@@ -16,6 +18,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
   const [lineHeight, setLineHeight] = useState(DEFAULT_LINE_HEIGHT)
   const [pageWidth, setPageWidth] = useState(DEFAULT_PAGE_WIDTH)
+  const [columns, setColumns] = useState(DEFAULT_COLUMNS)
   const [chapterText, setChapterText] = useState('')
   const [showToc, setShowToc] = useState(false)
   const [showTocEditor, setShowTocEditor] = useState(false)
@@ -31,6 +34,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
         setFontSize(d.progress.fontSize)
         setLineHeight(d.progress.lineHeight)
         setPageWidth(d.progress.pageWidth)
+        setColumns(d.progress.columns ?? DEFAULT_COLUMNS)
       }
     })()
   }, [bookId])
@@ -56,9 +60,12 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       el.style.width = `${pageWidth}px`
       el.style.fontSize = `${fontSize}px`
       el.style.lineHeight = String(lineHeight)
+      el.style.padding = '36px 44px'
+      el.style.columnCount = String(columns)
+      el.style.columnGap = `${COLUMN_GAP}px`
       return el.offsetHeight
     },
-    [pageWidth, fontSize, lineHeight]
+    [pageWidth, fontSize, lineHeight, columns]
   )
 
   const { pages, pageCount } = useMemo(
@@ -82,11 +89,12 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
         pageIndex: clampedPage,
         fontSize,
         lineHeight,
-        pageWidth
+        pageWidth,
+        columns
       })
     }, 500)
     return () => window.clearTimeout(timer)
-  }, [detail, bookId, chapterIndex, clampedPage, fontSize, lineHeight, pageWidth])
+  }, [detail, bookId, chapterIndex, clampedPage, fontSize, lineHeight, pageWidth, columns])
 
   const goToChapter = (i: number, toLast = false): void => {
     const target = Math.max(0, Math.min(i, chapters.length - 1))
@@ -129,6 +137,12 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     if (kind === 'font') setFontSize((v) => Math.min(30, Math.max(14, v + delta)))
     if (kind === 'line') setLineHeight((v) => Math.round(Math.min(2.4, Math.max(1.5, v + delta * 0.1)) * 10) / 10)
     if (kind === 'width') setPageWidth((v) => Math.min(960, Math.max(560, v + delta * 40)))
+  }
+
+  const setColumnCount = (n: number): void => {
+    const clamped = Math.min(3, Math.max(1, n))
+    setColumns(clamped)
+    setPageIndex(0)
   }
 
   const applyChapters = (newChapters: ChapterMeta[]): void => {
@@ -189,12 +203,24 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
               页宽+
             </button>
           </span>
+          <span className="tool-group">
+            <button className="btn small" onClick={() => setColumnCount(columns - 1)} disabled={columns <= 1}>
+              栏数−
+            </button>
+            <span className="tool-value">{columns} 栏</span>
+            <button className="btn small" onClick={() => setColumnCount(columns + 1)} disabled={columns >= 3}>
+              栏数+
+            </button>
+          </span>
         </div>
       </header>
 
       <div className="reader-body">
         <button className="page-zone left" onClick={prevPage} aria-label="上一页" />
-        <main className="reader-page" style={{ maxWidth: pageWidth }}>
+        <main
+          className="reader-page"
+          style={{ maxWidth: pageWidth, columnCount: columns, columnGap: `${COLUMN_GAP}px` }}
+        >
           <p className="reader-text" style={{ fontSize: `${fontSize}px`, lineHeight }}>
             {pages[clampedPage]}
           </p>

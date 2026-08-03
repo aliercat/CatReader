@@ -43,6 +43,8 @@ export interface Progress {
   fontSize: number
   lineHeight: number
   pageWidth: number
+  /** 阅读栏数（1/2/3），默认 1 */
+  columns?: number
   updatedAt: number
 }
 
