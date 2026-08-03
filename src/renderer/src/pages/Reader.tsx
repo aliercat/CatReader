@@ -215,7 +215,7 @@ export default function Reader({
   }
 
   const prevChapter = (): void => {
-    if (chapterIndex > 0) goToChapter(chapterIndex - 1, true)
+    if (chapterIndex > 0) goToChapter(chapterIndex - 1)
   }
 
   const nextChapter = (): void => {

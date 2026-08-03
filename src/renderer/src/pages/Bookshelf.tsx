@@ -97,7 +97,7 @@ export default function Bookshelf({
   )
 
   return (
-    <div className="shelf">
+    <div className="shelf-page">
       <header className="shelf-header">
         <h1>CatReader</h1>
         <div className="shelf-header-actions">
@@ -116,94 +116,96 @@ export default function Bookshelf({
           <WindowControls />
         </div>
       </header>
-      {books.length > 0 && (
-        <div className="shelf-toolbar">
-          <input
-            className="shelf-search"
-            type="search"
-            placeholder="搜索书名或作者"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <div className="font-row" role="group" aria-label="格式">
-            {(
-              [
-                ['all', '全部'],
-                ['txt', 'TXT'],
-                ['epub', 'EPUB']
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                className={`font-chip${format === value ? ' active' : ''}`}
-                aria-pressed={format === value}
-                onClick={() => setFormat(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="font-row" role="group" aria-label="排序">
-            {(
-              [
-                ['recent', '最近阅读'],
-                ['imported', '最近导入'],
-                ['title', '书名']
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                className={`font-chip${sort === value ? ' active' : ''}`}
-                aria-pressed={sort === value}
-                onClick={() => setSort(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      {notice && <div className="notice">{notice}</div>}
-      <UpdateBar
-        state={updateState}
-        onRestart={() => void window.api.quitAndInstall()}
-        onRetry={() => void handleCheckUpdate()}
-      />
-      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
-      {loading ? (
-        <p className="empty">加载中…</p>
-      ) : books.length === 0 ? (
-        <div className="empty">
-          <p className="empty-title">书架还是空的</p>
-          <p className="empty-sub">点击右上角“导入小说”，支持 txt / epub 格式。</p>
-        </div>
-      ) : visible.length === 0 ? (
-        <div className="empty">
-          <p className="empty-title">没有匹配的书籍</p>
-          <p className="empty-sub">换个关键词或筛选条件试试。</p>
-        </div>
-      ) : (
-        <div className="book-grid">
-          {visible.map((b) => (
-            <div className="book-card" key={b.id}>
-              <button className="book-cover" onClick={() => onOpen(b.id)} title={`打开《${b.title}》`}>
-                {b.coverPath ? <img src={fileUrl(b.coverPath)} alt="" /> : <CoverPlaceholder title={b.title} />}
-                {b.readPercent != null && <span className="read-badge">已读 {b.readPercent}%</span>}
-              </button>
-              <div className="book-title" title={b.title}>
-                {b.title}
-              </div>
-              <div className="book-meta">
-                <span>{b.format.toUpperCase()}</span>
-                <span>{b.chapterCount} 章</span>
-              </div>
-              <button className="book-delete" onClick={() => void handleDelete(b)}>
-                删除
-              </button>
+      <div className="shelf">
+        {books.length > 0 && (
+          <div className="shelf-toolbar">
+            <input
+              className="shelf-search"
+              type="search"
+              placeholder="搜索书名或作者"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="font-row" role="group" aria-label="格式">
+              {(
+                [
+                  ['all', '全部'],
+                  ['txt', 'TXT'],
+                  ['epub', 'EPUB']
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  className={`font-chip${format === value ? ' active' : ''}`}
+                  aria-pressed={format === value}
+                  onClick={() => setFormat(value)}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+            <div className="font-row" role="group" aria-label="排序">
+              {(
+                [
+                  ['recent', '最近阅读'],
+                  ['imported', '最近导入'],
+                  ['title', '书名']
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  className={`font-chip${sort === value ? ' active' : ''}`}
+                  aria-pressed={sort === value}
+                  onClick={() => setSort(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {notice && <div className="notice">{notice}</div>}
+        <UpdateBar
+          state={updateState}
+          onRestart={() => void window.api.quitAndInstall()}
+          onRetry={() => void handleCheckUpdate()}
+        />
+        {loading ? (
+          <p className="empty">加载中…</p>
+        ) : books.length === 0 ? (
+          <div className="empty">
+            <p className="empty-title">书架还是空的</p>
+            <p className="empty-sub">点击右上角“导入小说”，支持 txt / epub 格式。</p>
+          </div>
+        ) : visible.length === 0 ? (
+          <div className="empty">
+            <p className="empty-title">没有匹配的书籍</p>
+            <p className="empty-sub">换个关键词或筛选条件试试。</p>
+          </div>
+        ) : (
+          <div className="book-grid">
+            {visible.map((b) => (
+              <div className="book-card" key={b.id}>
+                <button className="book-cover" onClick={() => onOpen(b.id)} title={`打开《${b.title}》`}>
+                  {b.coverPath ? <img src={fileUrl(b.coverPath)} alt="" /> : <CoverPlaceholder title={b.title} />}
+                  {b.readPercent != null && <span className="read-badge">已读 {b.readPercent}%</span>}
+                </button>
+                <div className="book-title" title={b.title}>
+                  {b.title}
+                </div>
+                <div className="book-meta">
+                  <span>{b.format.toUpperCase()}</span>
+                  <span>{b.chapterCount} 章</span>
+                </div>
+                <button className="book-delete" onClick={() => void handleDelete(b)}>
+                  删除
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </div>
   )
 }

@@ -153,14 +153,15 @@ button {
 .shelf {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px 28px 48px;
+  padding: 12px 28px 48px;
 }
 
 .shelf-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  gap: 12px;
+  padding: 20px 16px 0;
 }
 
 .shelf-header h1 {
@@ -1053,12 +1054,14 @@ mark {
 .window-controls {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin-left: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  overflow: hidden;
 }
 
 .wc-btn {
-  width: 32px;
+  width: 30px;
   height: 26px;
   display: inline-flex;
   align-items: center;
@@ -1066,11 +1069,17 @@ mark {
   border: none;
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1;
-  border-radius: 6px;
   cursor: pointer;
   padding: 0;
+  transition: background 0.15s ease;
+}
+
+.wc-btn + .wc-btn {
+  border-left: 1px solid var(--border);
+}
+
+.wc-btn svg {
+  display: block;
 }
 
 .wc-btn:hover {
@@ -1081,6 +1090,21 @@ mark {
 .wc-close:hover {
   background: var(--danger);
   color: #fff;
+}
+
+/* 阅读器顶栏：与 .btn.small 同一量级的紧凑尺寸 */
+.reader-topbar .window-controls {
+  border-radius: 5px;
+}
+
+.reader-topbar .wc-btn {
+  width: 26px;
+  height: 20px;
+}
+
+.reader-topbar .wc-btn svg {
+  width: 10px;
+  height: 10px;
 }
 
 /* ---------- app menu ---------- */
