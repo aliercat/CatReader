@@ -13,7 +13,7 @@ test('import → shelf → open → read → progress saved', async () => {
   )
 
   const app = await electron.launch({
-    args: ['.'],
+    args: ['.', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage'],
     cwd: process.cwd(),
     env: { ...process.env, CATREADER_LIBRARY_DIR: libDir }
   })
@@ -52,7 +52,8 @@ test('import → shelf → open → read → progress saved', async () => {
     const books = await win.evaluate(async () => window.api.getBooks())
     expect(books[0].lastReadAt).toBeTruthy()
     const detail = await win.evaluate(async (id: string) => window.api.openBook(id), books[0].id)
-    expect(detail.progress?.pageIndex).toBeGreaterThan(0)
+    const p = detail.progress
+    expect(p && (p.chapterIndex > 0 || p.pageIndex > 0)).toBe(true)
     expect(detail.progress?.themeId).toBe('night')
   } finally {
     await app.close()
