@@ -3,6 +3,7 @@ import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BookDetail, ChapterMeta } from '../../../shared/types'
 import { paginate } from '../lib/paginate'
 import { fileUrl } from '../lib/file-url'
+import { filterChapters } from '../lib/chapters'
 import {
   READER_DEFAULTS,
   clampNumber,
@@ -33,6 +34,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   const [loadedChapterIndex, setLoadedChapterIndex] = useState(-1)
   const [showToc, setShowToc] = useState(false)
   const [showTocEditor, setShowTocEditor] = useState(false)
+  const [tocQuery, setTocQuery] = useState('')
   const measureRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLElement | null>(null)
   const [pageHeight, setPageHeight] = useState(600)
@@ -122,6 +124,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   const chapterReady = loadedChapterIndex === chapterIndex
   const clampedPage = Math.min(pageIndex, Math.max(0, pageCount - 1))
   const chapterTitle = chapters[chapterIndex]?.title ?? ''
+  const filteredChapters = useMemo(() => filterChapters(chapters, tocQuery), [chapters, tocQuery])
 
   useEffect(() => {
     // 章节文本异步加载期间 pages 仍属于上一章，不能用它的 pageCount 去钳制页码，
@@ -164,6 +167,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     setChapterIndex(target)
     setPageIndex(toLast ? Number.MAX_SAFE_INTEGER : 0)
     setShowToc(false)
+    setTocQuery('')
   }
 
   const nextPage = (): void => {
@@ -182,13 +186,33 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     }
   }
 
+  const prevChapter = (): void => {
+    if (chapterIndex > 0) goToChapter(chapterIndex - 1, true)
+  }
+
+  const nextChapter = (): void => {
+    if (chapterIndex < chapters.length - 1) goToChapter(chapterIndex + 1)
+  }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return
+      }
       if (settingsOpen) {
         if (e.key === 'Escape') setSettingsOpen(false)
         return
       }
-      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      if (e.key === 'Escape' && showToc) {
+        setShowToc(false)
+      } else if (e.ctrlKey && e.key === 'ArrowUp') {
+        e.preventDefault()
+        prevChapter()
+      } else if (e.ctrlKey && e.key === 'ArrowDown') {
+        e.preventDefault()
+        nextChapter()
+      } else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault()
         nextPage()
       } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
@@ -297,17 +321,22 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
         >
           {isCoverChapter ? (
             detail.book.coverPath ? (
-              <div className="reader-cover">
+              <div key="cover" className="reader-cover animate-in">
                 <img src={fileUrl(detail.book.coverPath)} alt="" />
               </div>
             ) : (
-              <div className="reader-cover-fallback">{detail.book.title}</div>
+              <div key="cover-fallback" className="reader-cover-fallback animate-in">
+                {detail.book.title}
+              </div>
             )
           ) : !chapterReady ? (
-            <p className="reader-text reader-text-loading">加载中…</p>
+            <p key={`loading-${chapterIndex}`} className="reader-text reader-text-loading">
+              加载中…
+            </p>
           ) : (
             <p
-              className="reader-text"
+              key={`${chapterIndex}-${clampedPage}`}
+              className="reader-text animate-in"
               style={{ fontSize: `${fontSize}px`, lineHeight, fontFamily: font.stack }}
             >
               {pages[clampedPage]}
@@ -317,23 +346,37 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       </div>
 
       <footer className="reader-footer">
-        <button
-          className="btn small"
-          onClick={prevPage}
-          disabled={chapterIndex === 0 && clampedPage === 0}
-        >
-          上一页
-        </button>
+        <div className="reader-footer-group">
+          <button className="btn small" onClick={prevChapter} disabled={chapterIndex === 0}>
+            上一章
+          </button>
+          <button
+            className="btn small"
+            onClick={prevPage}
+            disabled={chapterIndex === 0 && clampedPage === 0}
+          >
+            上一页
+          </button>
+        </div>
         <span>
           第 {clampedPage + 1} / {pageCount} 页 · 第 {chapterIndex + 1} / {chapters.length} 章
         </span>
-        <button
-          className="btn small"
-          onClick={nextPage}
-          disabled={chapterIndex === chapters.length - 1 && clampedPage === pageCount - 1}
-        >
-          下一页
-        </button>
+        <div className="reader-footer-group">
+          <button
+            className="btn small"
+            onClick={nextPage}
+            disabled={chapterIndex === chapters.length - 1 && clampedPage === pageCount - 1}
+          >
+            下一页
+          </button>
+          <button
+            className="btn small"
+            onClick={nextChapter}
+            disabled={chapterIndex === chapters.length - 1}
+          >
+            下一章
+          </button>
+        </div>
       </footer>
 
       <SettingsPanel
@@ -352,17 +395,28 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
               ✕
             </button>
           </div>
-          <ul className="toc-list">
-            {chapters.map((c, i) => (
-              <li
-                key={i}
-                className={i === chapterIndex ? 'active' : ''}
-                onClick={() => goToChapter(i)}
-              >
-                {c.title}
-              </li>
-            ))}
-          </ul>
+          <input
+            className="toc-search"
+            type="search"
+            placeholder="搜索章节"
+            value={tocQuery}
+            onChange={(e) => setTocQuery(e.target.value)}
+          />
+          {filteredChapters.length === 0 ? (
+            <p className="toc-empty">没有匹配的章节</p>
+          ) : (
+            <ul className="toc-list">
+              {filteredChapters.map((c) => (
+                <li
+                  key={c.index}
+                  className={c.index === chapterIndex ? 'active' : ''}
+                  onClick={() => goToChapter(c.index)}
+                >
+                  {c.title}
+                </li>
+              ))}
+            </ul>
+          )}
         </aside>
       </div>
 
