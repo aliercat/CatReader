@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { BookDetail, ChapterMeta } from '../../../shared/types'
 import { paginate } from '../lib/paginate'
 import TocEditor from '../components/TocEditor'
@@ -54,8 +54,9 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   }, [detail, bookId, chapterIndex])
 
   // Paginate against the real on-screen page container size so the text fills
-  // the reading area and columns never overflow when the window is narrow.
-  useEffect(() => {
+  // the reading area and columns never overflow when the window is narrow or
+  // when the page-width setting changes.
+  useLayoutEffect(() => {
     const update = (): void => {
       const el = pageRef.current
       if (el) {
@@ -70,7 +71,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       window.clearTimeout(timer)
       window.removeEventListener('resize', update)
     }
-  }, [])
+  }, [pageWidth])
 
   const measure = useCallback(
     (t: string): number => {
