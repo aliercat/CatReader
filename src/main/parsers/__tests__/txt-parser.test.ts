@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chapterContent, parseTxtToc, splitByLines } from '../txt-parser'
+import { chapterContent, parseTxtToc, splitByLines, stripLeadingTitle } from '../txt-parser'
 
 const SAMPLE = [
   '楔子',
@@ -70,5 +70,31 @@ describe('splitByLines', () => {
     const entries = splitByLines(text, 200)
     expect(entries).toHaveLength(1)
     expect(entries[0].title).toBe('全文')
+  })
+})
+
+describe('stripLeadingTitle', () => {
+  it('removes a first line that equals the chapter title', () => {
+    expect(stripLeadingTitle('第一章 开始\n正文第一段。\n继续。', '第一章 开始')).toBe(
+      '正文第一段。\n继续。'
+    )
+    expect(stripLeadingTitle('第一章 开始', '第一章 开始')).toBe('')
+  })
+
+  it('keeps content when the first line differs from the title', () => {
+    expect(stripLeadingTitle('正文第一段。\n第一章 开始\n再一段。', '第一章 开始')).toBe(
+      '正文第一段。\n第一章 开始\n再一段。'
+    )
+    expect(stripLeadingTitle('开篇的话\n正文', '序章')).toBe('开篇的话\n正文')
+  })
+
+  it('handles empty content, empty title and CRLF line endings', () => {
+    expect(stripLeadingTitle('', '第一章')).toBe('')
+    expect(stripLeadingTitle('第一章 开始\n正文', '')).toBe('第一章 开始\n正文')
+    expect(stripLeadingTitle('\r\n第一章 开始\r\n正文。', '第一章 开始')).toBe('正文。')
+  })
+
+  it('does not strip a longer first line that merely starts with the title', () => {
+    expect(stripLeadingTitle('第一章 开始（上）\n正文', '第一章 开始')).toBe('第一章 开始（上）\n正文')
   })
 })

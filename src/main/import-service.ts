@@ -6,7 +6,7 @@ import { BookStore } from './stores/book-store'
 import { ProgressStore } from './stores/progress-store'
 import { TextCache } from './services/text-cache'
 import { decodeText } from './parsers/encoding'
-import { chapterContent, DEFAULT_PRESET_IDS, parseTxtToc } from './parsers/txt-parser'
+import { chapterContent, DEFAULT_PRESET_IDS, parseTxtToc, stripLeadingTitle } from './parsers/txt-parser'
 import { parseEpub } from './parsers/epub-parser'
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024
@@ -123,16 +123,20 @@ export class ImportService {
       }
       const ch = chapters[chapterIndex]
       if (ch.charStart === undefined || ch.charEnd === undefined) return null
-      return chapterContent(text, {
-        index: ch.index,
-        title: ch.title,
-        charStart: ch.charStart,
-        charEnd: ch.charEnd
-      })
+      return stripLeadingTitle(
+        chapterContent(text, {
+          index: ch.index,
+          title: ch.title,
+          charStart: ch.charStart,
+          charEnd: ch.charEnd
+        }),
+        ch.title
+      )
     }
 
     const file = join(this.bookStore.getBookDir(bookId), 'chapters', `${chapterIndex}.txt`)
-    return existsSync(file) ? readFileSync(file, 'utf-8') : null
+    if (!existsSync(file)) return null
+    return stripLeadingTitle(readFileSync(file, 'utf-8'), chapters[chapterIndex].title)
   }
 
   getFullText(bookId: string): string | null {

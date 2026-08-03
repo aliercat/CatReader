@@ -53,9 +53,9 @@ describe('ImportService', () => {
     const books = JSON.parse(readFileSync(join(dir, 'books.json'), 'utf-8'))
     expect(books).toHaveLength(1)
     expect(books[0].title).toBe('源文件')
-    expect(importService.getChapterText(id, 0)).toBe('楔子\n楔子内容')
-    expect(importService.getChapterText(id, 1)).toBe('第一章 相遇\n正文。')
-    expect(importService.getChapterText(id, 2)).toBe('第二章 分别\n正文二。')
+    expect(importService.getChapterText(id, 0)).toBe('楔子内容')
+    expect(importService.getChapterText(id, 1)).toBe('正文。')
+    expect(importService.getChapterText(id, 2)).toBe('正文二。')
   })
 
   it('imports an epub and extracts chapter text', async () => {
@@ -64,7 +64,7 @@ describe('ImportService', () => {
     const [result] = await importService.importFiles([epub])
     expect(result.ok).toBe(true)
     const id = result.bookId!
-    expect(importService.getChapterText(id, 0)).toBe('序章\n导入测试内容。')
+    expect(importService.getChapterText(id, 0)).toBe('导入测试内容。')
   })
 
   it('rejects unsupported formats', async () => {

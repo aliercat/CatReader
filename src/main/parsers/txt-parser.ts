@@ -73,6 +73,21 @@ export function chapterContent(text: string, entry: ChapterEntry): string {
 }
 
 /**
+ * 去掉章节正文开头与章节标题重复的行。
+ * 顶栏已经显示章节名，正文里再出现一次标题会显得重复；
+ * 只有第一行与标题完全一致时才剥离，避免误删正文内容。
+ */
+export function stripLeadingTitle(content: string, title: string): string {
+  const trimmed = content.trimStart()
+  const trimmedTitle = title.trim()
+  if (!trimmed || !trimmedTitle) return content
+  const newline = trimmed.search(/[\r\n]/)
+  const firstLine = (newline === -1 ? trimmed : trimmed.slice(0, newline)).trim()
+  if (firstLine !== trimmedTitle) return content
+  return newline === -1 ? '' : trimmed.slice(newline).trimStart()
+}
+
+/**
  * Fallback used when a user forces a re-parse without any matching preset.
  */
 export function splitByLines(text: string, linesPerChapter = 200): ChapterEntry[] {
