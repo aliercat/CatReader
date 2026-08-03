@@ -348,6 +348,58 @@ button {
   flex-wrap: wrap;
 }
 
+.find-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.find-input {
+  flex: 0 1 260px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--panel);
+  outline: none;
+}
+
+.find-input:focus {
+  border-color: var(--accent);
+}
+
+.find-count {
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 48px;
+  font-variant-numeric: tabular-nums;
+}
+
+.find-close {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 2px 6px;
+}
+
+.find-close:hover {
+  color: var(--text);
+  background: none;
+}
+
+mark {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 .tool-group {
   display: inline-flex;
   gap: 4px;

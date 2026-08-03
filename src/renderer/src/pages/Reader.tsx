@@ -4,6 +4,7 @@ import type { BookDetail, ChapterMeta } from '../../../shared/types'
 import { buildChapterPages, type ChapterPage } from '../lib/chapter-pages'
 import { fileUrl } from '../lib/file-url'
 import { filterChapters } from '../lib/chapters'
+import { findAllIndices, highlightInText, pageIndexForOffset } from '../lib/find'
 import {
   READER_DEFAULTS,
   clampNumber,
@@ -46,6 +47,9 @@ export default function Reader({
   const [showToc, setShowToc] = useState(false)
   const [showTocEditor, setShowTocEditor] = useState(false)
   const [tocQuery, setTocQuery] = useState('')
+  const [findOpen, setFindOpen] = useState(false)
+  const [findQuery, setFindQuery] = useState('')
+  const [findIndex, setFindIndex] = useState(-1)
   const measureRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLElement | null>(null)
   const [pageHeight, setPageHeight] = useState(600)
@@ -138,6 +142,16 @@ export default function Reader({
   const pageCount = pages.length
   const clampedPage = Math.min(pageIndex, Math.max(0, pageCount - 1))
   const currentPage: ChapterPage = pages[clampedPage]
+  const findMatches = useMemo(() => findAllIndices(chapterText, findQuery), [chapterText, findQuery])
+  const overallPercent =
+    chapters.length > 0
+      ? Math.min(
+          100,
+          Math.round(
+            ((chapterIndex + (clampedPage + 1) / Math.max(1, pageCount)) / chapters.length) * 100
+          )
+        )
+      : 0
 
   useEffect(() => {
     // 章节文本异步加载期间 pages 仍属于上一章，不能用它的 pageCount 去钳制页码，
@@ -207,18 +221,37 @@ export default function Reader({
     if (chapterIndex < chapters.length - 1) goToChapter(chapterIndex + 1)
   }
 
+  const goToFindMatch = (i: number): void => {
+    if (findMatches.length === 0) return
+    const idx = ((i % findMatches.length) + findMatches.length) % findMatches.length
+    setFindIndex(idx)
+    setPageIndex(
+      pageIndexForOffset(
+        pages.map((p) => (p.kind === 'text' ? p.text.length : 0)),
+        findMatches[idx]
+      )
+    )
+  }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const target = e.target as HTMLElement | null
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
         return
       }
-      if (settingsOpen) {
-        if (e.key === 'Escape') setSettingsOpen(false)
+      if (e.key === 'Escape') {
+        if (findOpen) setFindOpen(false)
+        else if (showToc) setShowToc(false)
+        else if (settingsOpen) setSettingsOpen(false)
         return
       }
-      if (e.key === 'Escape' && showToc) {
-        setShowToc(false)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setFindOpen(true)
+      } else if (e.key === 't') {
+        setShowToc((v) => !v)
+      } else if (e.key === 's') {
+        setSettingsOpen((v) => !v)
       } else if (e.ctrlKey && e.key === 'ArrowUp') {
         e.preventDefault()
         prevChapter()
@@ -236,6 +269,12 @@ export default function Reader({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
+
+  useEffect(() => {
+    setFindIndex(-1)
+    setFindQuery('')
+    setFindOpen(false)
+  }, [chapterIndex])
 
   const updateSettings = (patch: Partial<ReaderSettings>): void => {
     if (patch.fontSize !== undefined) setFontSize(clampNumber(14, 30, patch.fontSize))
@@ -322,6 +361,49 @@ export default function Reader({
         </div>
       </header>
 
+      {findOpen && (
+        <div className="find-bar">
+          <input
+            className="find-input"
+            autoFocus
+            placeholder="在本章中搜索"
+            value={findQuery}
+            onChange={(e) => {
+              setFindQuery(e.target.value)
+              setFindIndex(-1)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                goToFindMatch(findIndex + (e.shiftKey ? -1 : 1))
+              } else if (e.key === 'Escape') {
+                setFindOpen(false)
+              }
+            }}
+          />
+          <span className="find-count">
+            {findMatches.length > 0 ? `${Math.max(1, findIndex + 1)} / ${findMatches.length}` : '0 / 0'}
+          </span>
+          <button
+            className="btn small"
+            onClick={() => goToFindMatch(findIndex - 1)}
+            disabled={findMatches.length === 0}
+          >
+            ↑
+          </button>
+          <button
+            className="btn small"
+            onClick={() => goToFindMatch(findIndex + 1)}
+            disabled={findMatches.length === 0}
+          >
+            ↓
+          </button>
+          <button className="btn ghost find-close" onClick={() => setFindOpen(false)} aria-label="关闭搜索">
+            ✕
+          </button>
+        </div>
+      )}
+
       <div className="reader-body" onClick={onBodyClick}>
         <main
           ref={pageRef}
@@ -361,7 +443,20 @@ export default function Reader({
               className="reader-text animate-in"
               style={{ fontSize: `${fontSize}px`, lineHeight, fontFamily: font.stack }}
             >
-              {currentPage.text}
+              {findOpen && findQuery.trim()
+                ? (() => {
+                    const hit = highlightInText(currentPage.text, findQuery)
+                    return hit ? (
+                      <>
+                        {hit.before}
+                        <mark>{hit.match}</mark>
+                        {hit.after}
+                      </>
+                    ) : (
+                      currentPage.text
+                    )
+                  })()
+                : currentPage.text}
             </p>
           )}
         </main>
@@ -381,7 +476,8 @@ export default function Reader({
           </button>
         </div>
         <span>
-          第 {clampedPage + 1} / {pageCount} 页 · 第 {chapterIndex + 1} / {chapters.length} 章
+          第 {clampedPage + 1} / {pageCount} 页 · 第 {chapterIndex + 1} / {chapters.length} 章 · 全书{' '}
+          {overallPercent}%
         </span>
         <div className="reader-footer-group">
           <button
