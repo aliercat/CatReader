@@ -25,6 +25,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   const measureRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLElement | null>(null)
   const [pageHeight, setPageHeight] = useState(600)
+  const [measureWidth, setMeasureWidth] = useState(DEFAULT_PAGE_WIDTH)
 
   useEffect(() => {
     void (async () => {
@@ -52,12 +53,15 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     }
   }, [detail, bookId, chapterIndex])
 
-  // Paginate against the real on-screen page container height so the text
-  // fills the whole reading area instead of leaving a blank band at the bottom.
+  // Paginate against the real on-screen page container size so the text fills
+  // the reading area and columns never overflow when the window is narrow.
   useEffect(() => {
     const update = (): void => {
       const el = pageRef.current
-      if (el) setPageHeight(Math.max(PAGE_MIN_HEIGHT, el.clientHeight - 2))
+      if (el) {
+        setPageHeight(Math.max(PAGE_MIN_HEIGHT, el.clientHeight - 2))
+        setMeasureWidth(Math.max(200, el.clientWidth - 2))
+      }
     }
     update()
     const timer = window.setTimeout(update, 120)
@@ -73,7 +77,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       const el = measureRef.current
       if (!el) return 0
       el.textContent = t
-      el.style.width = `${pageWidth}px`
+      el.style.width = `${measureWidth}px`
       el.style.fontSize = `${fontSize}px`
       el.style.lineHeight = String(lineHeight)
       el.style.padding = '36px 44px'
@@ -81,7 +85,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       el.style.columnGap = `${COLUMN_GAP}px`
       return el.offsetHeight
     },
-    [pageWidth, fontSize, lineHeight, columns]
+    [measureWidth, fontSize, lineHeight, columns]
   )
 
   const { pages, pageCount } = useMemo(
