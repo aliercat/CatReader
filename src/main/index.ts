@@ -1,11 +1,31 @@
-import { app, shell, BrowserWindow } from 'electron'
-import { join } from 'path'
+import { app, shell, BrowserWindow, protocol } from 'electron'
+import { readFile } from 'fs/promises'
+import { extname, join, resolve } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { BookStore } from './stores/book-store'
 import { ProgressStore } from './stores/progress-store'
 import { TextCache } from './services/text-cache'
 import { ImportService } from './import-service'
 import { registerIpc } from './ipc'
+
+const IMAGE_MIME: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.bmp': 'image/bmp'
+}
+
+// 自定义协议必须在 app ready 之前声明为 privileged，才能在 dev（http 页面）
+// 与打包版（file 页面）中统一加载本地文件；否则 dev 模式下的 http 页面
+// 会被 Chromium 拦截 file:// 图片导致封面裂图。
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'catreader',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+  }
+])
 
 function createWindow(): void {
   // Create the browser window.
@@ -47,6 +67,25 @@ app.whenReady().then(() => {
 
   // Allow tests / portable runs to redirect the library to a custom directory
   const libraryRoot = process.env.CATREADER_LIBRARY_DIR ?? join(app.getPath('userData'), 'library')
+
+  // catreader://local/<绝对路径> 仅允许读取库目录内的文件
+  const libraryRootResolved = resolve(libraryRoot)
+  protocol.handle('catreader', async (request) => {
+    try {
+      const url = new URL(request.url)
+      const requested = resolve(decodeURIComponent(url.pathname).replace(/^[/\\]+/, ''))
+      if (requested !== libraryRootResolved && !requested.startsWith(libraryRootResolved + '\\')) {
+        return new Response('Forbidden', { status: 403 })
+      }
+      const data = await readFile(requested)
+      return new Response(data, {
+        headers: { 'Content-Type': IMAGE_MIME[extname(requested).toLowerCase()] ?? 'application/octet-stream' }
+      })
+    } catch {
+      return new Response('Not Found', { status: 404 })
+    }
+  })
+
   const bookStore = new BookStore(libraryRoot)
   const progressStore = new ProgressStore(join(libraryRoot, 'progress.json'))
   const importService = new ImportService(bookStore, progressStore, new TextCache())

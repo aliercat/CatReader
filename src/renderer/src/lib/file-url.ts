@@ -1,3 +1,3 @@
 export function fileUrl(p: string): string {
-  return 'file:///' + encodeURI(p.replace(/\\/g, '/'))
+  return 'catreader://local/' + encodeURI(p.replace(/\\/g, '/'))
 }
