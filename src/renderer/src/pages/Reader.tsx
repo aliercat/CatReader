@@ -513,9 +513,6 @@ export default function Reader({
         <aside className="toc-panel" onClick={(e) => e.stopPropagation()}>
           <div className="toc-header">
             <h3>目录</h3>
-            <button className="toc-close" onClick={() => setShowToc(false)} aria-label="关闭目录">
-              ✕
-            </button>
           </div>
           <input
             className="toc-search"

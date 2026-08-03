@@ -99,9 +99,9 @@ export default function Bookshelf({
   return (
     <div className="shelf-page">
       <header className="shelf-header">
-        <h1>CatReader</h1>
-        <div className="shelf-header-actions">
-          <button className="btn primary" onClick={() => void handleImport()}>
+        <div className="shelf-header-left">
+          <h1>CatReader</h1>
+          <button className="btn btn-import" onClick={() => void handleImport()}>
             导入小说
           </button>
           <AppMenu
@@ -113,8 +113,8 @@ export default function Bookshelf({
             onCheckUpdate={() => void handleCheckUpdate()}
             onAbout={() => setAboutOpen(true)}
           />
-          <WindowControls />
         </div>
+        <WindowControls />
       </header>
       <div className="shelf">
         {books.length > 0 && (
@@ -126,42 +126,26 @@ export default function Bookshelf({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <div className="font-row" role="group" aria-label="格式">
-              {(
-                [
-                  ['all', '全部'],
-                  ['txt', 'TXT'],
-                  ['epub', 'EPUB']
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  className={`font-chip${format === value ? ' active' : ''}`}
-                  aria-pressed={format === value}
-                  onClick={() => setFormat(value)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="font-row" role="group" aria-label="排序">
-              {(
-                [
-                  ['recent', '最近阅读'],
-                  ['imported', '最近导入'],
-                  ['title', '书名']
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  className={`font-chip${sort === value ? ' active' : ''}`}
-                  aria-pressed={sort === value}
-                  onClick={() => setSort(value)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <select
+              className="shelf-select"
+              aria-label="格式"
+              value={format}
+              onChange={(e) => setFormat(e.target.value as ShelfFormatFilter)}
+            >
+              <option value="all">全部格式</option>
+              <option value="txt">TXT</option>
+              <option value="epub">EPUB</option>
+            </select>
+            <select
+              className="shelf-select"
+              aria-label="排序"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as ShelfSort)}
+            >
+              <option value="recent">最近阅读</option>
+              <option value="imported">最近导入</option>
+              <option value="title">书名</option>
+            </select>
           </div>
         )}
         {notice && <div className="notice">{notice}</div>}
@@ -175,7 +159,7 @@ export default function Bookshelf({
         ) : books.length === 0 ? (
           <div className="empty">
             <p className="empty-title">书架还是空的</p>
-            <p className="empty-sub">点击右上角“导入小说”，支持 txt / epub 格式。</p>
+            <p className="empty-sub">点击左上角“导入小说”，支持 txt / epub 格式。</p>
           </div>
         ) : visible.length === 0 ? (
           <div className="empty">

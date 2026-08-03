@@ -161,7 +161,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 16px 0;
+  padding: 22px 14px 0 28px;
 }
 
 .shelf-header h1 {
@@ -863,7 +863,6 @@ mark {
 .toc-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: 10px;
 }
 
@@ -894,19 +893,6 @@ mark {
   text-align: center;
   font-size: 12px;
   color: var(--muted);
-}
-
-.toc-close {
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: 13px;
-  padding: 2px 6px;
-}
-
-.toc-close:hover {
-  color: var(--text);
-  background: none;
 }
 
 .toc-list {
@@ -1037,7 +1023,7 @@ mark {
 .shelf-header .btn,
 .shelf-header .app-menu,
 .shelf-header input,
-.shelf-header-actions,
+.shelf-header-left,
 .reader-topbar .btn,
 .reader-topbar .app-menu,
 .reader-topbar input,
@@ -1045,23 +1031,50 @@ mark {
   -webkit-app-region: no-drag;
 }
 
-.shelf-header-actions {
+.shelf-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.shelf-header h1 {
+  font-size: 22px;
+}
+
+/* 顶部栏按钮：无边框扁平风格 */
+.shelf-header .btn {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.shelf-header .btn:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.shelf-header .btn-import {
+  color: var(--accent);
+}
+
+.shelf-header .btn-import:hover:not(:disabled) {
+  color: var(--accent-dark);
+}
+
+.shelf-header .btn-menu:hover:not(:disabled) {
+  color: var(--accent);
 }
 
 .window-controls {
   display: flex;
   align-items: center;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--panel);
-  overflow: hidden;
+  gap: 2px;
 }
 
 .wc-btn {
-  width: 30px;
+  width: 32px;
   height: 26px;
   display: inline-flex;
   align-items: center;
@@ -1069,13 +1082,10 @@ mark {
   border: none;
   background: transparent;
   color: var(--muted);
+  border-radius: 6px;
   cursor: pointer;
   padding: 0;
   transition: background 0.15s ease;
-}
-
-.wc-btn + .wc-btn {
-  border-left: 1px solid var(--border);
 }
 
 .wc-btn svg {
@@ -1094,7 +1104,7 @@ mark {
 
 /* 阅读器顶栏：与 .btn.small 同一量级的紧凑尺寸 */
 .reader-topbar .window-controls {
-  border-radius: 5px;
+  border-radius: 6px;
 }
 
 .reader-topbar .wc-btn {
@@ -1132,7 +1142,6 @@ mark {
 .app-menu.open .btn-menu {
   background: var(--active-bg);
   color: var(--accent);
-  border-color: var(--accent);
 }
 
 .menu-popover {
@@ -1261,4 +1270,32 @@ mark {
   background: var(--accent);
   border-radius: 3px;
   transition: width 0.2s ease;
+}
+
+/* ---------- shelf filters ---------- */
+.shelf-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a919c' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 7px 26px 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.shelf-select:hover,
+.shelf-select:focus {
+  background-color: var(--hover);
+}
+
+.shelf-select option {
+  color: var(--text);
+  background: var(--panel);
 }
