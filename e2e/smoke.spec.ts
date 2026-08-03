@@ -21,7 +21,7 @@ test('import → shelf → open → read → progress saved', async () => {
   try {
     const win = await app.firstWindow()
     await win.waitForLoadState('domcontentloaded')
-    await expect(win.locator('h1')).toHaveText('CatReader')
+    await expect(win.getByRole('button', { name: '导入小说' })).toBeVisible()
 
     // Exercise the full IPC import path (bypasses the native file dialog)
     const results = await win.evaluate(async (p: string) => window.api.importBooks([p]), txtPath)

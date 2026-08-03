@@ -161,13 +161,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 14px 0 28px;
-}
-
-.shelf-header h1 {
-  margin: 0;
-  font-size: 26px;
-  letter-spacing: 0.5px;
+  padding: 10px 12px 0 16px;
 }
 
 .shelf-toolbar {
@@ -321,9 +315,21 @@ button {
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
+  background: transparent;
+  border-bottom: none;
   flex-wrap: wrap;
+}
+
+.reader-topbar .btn,
+.reader-footer .btn {
+  border: none;
+  background: transparent;
+  color: var(--text);
+}
+
+.reader-topbar .btn:hover:not(:disabled),
+.reader-footer .btn:hover:not(:disabled) {
+  background: var(--hover);
 }
 
 .reader-title {
@@ -1035,10 +1041,6 @@ mark {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.shelf-header h1 {
-  font-size: 22px;
 }
 
 /* 顶部栏按钮：无边框扁平风格 */

@@ -100,7 +100,6 @@ export default function Bookshelf({
     <div className="shelf-page">
       <header className="shelf-header">
         <div className="shelf-header-left">
-          <h1>CatReader</h1>
           <button className="btn btn-import" onClick={() => void handleImport()}>
             导入小说
           </button>
