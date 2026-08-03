@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BookDetail, ChapterMeta } from '../../../shared/types'
 import { paginate } from '../lib/paginate'
+import {
+  READER_DEFAULTS,
+  clampNumber,
+  getReaderZone,
+  resolveFont,
+  resolveTheme,
+  type ReaderSettings
+} from '../lib/reader-presets'
 import TocEditor from '../components/TocEditor'
+import SettingsPanel from '../components/SettingsPanel'
 import type { InsertPosition } from '../components/TocEditor'
 
-const DEFAULT_FONT_SIZE = 18
-const DEFAULT_LINE_HEIGHT = 1.8
-const DEFAULT_PAGE_WIDTH = 720
-const DEFAULT_COLUMNS = 1
 const COLUMN_GAP = 24
 const PAGE_MIN_HEIGHT = 200
 
@@ -15,17 +21,23 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   const [detail, setDetail] = useState<BookDetail | null>(null)
   const [chapterIndex, setChapterIndex] = useState(0)
   const [pageIndex, setPageIndex] = useState(0)
-  const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
-  const [lineHeight, setLineHeight] = useState(DEFAULT_LINE_HEIGHT)
-  const [pageWidth, setPageWidth] = useState(DEFAULT_PAGE_WIDTH)
-  const [columns, setColumns] = useState(DEFAULT_COLUMNS)
+  const [fontSize, setFontSize] = useState(READER_DEFAULTS.fontSize)
+  const [lineHeight, setLineHeight] = useState(READER_DEFAULTS.lineHeight)
+  const [pageWidth, setPageWidth] = useState(READER_DEFAULTS.pageWidth)
+  const [columns, setColumns] = useState(READER_DEFAULTS.columns)
+  const [themeId, setThemeId] = useState(READER_DEFAULTS.themeId)
+  const [fontFamily, setFontFamily] = useState(READER_DEFAULTS.fontFamily)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [chapterText, setChapterText] = useState('')
   const [showToc, setShowToc] = useState(false)
   const [showTocEditor, setShowTocEditor] = useState(false)
   const measureRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLElement | null>(null)
   const [pageHeight, setPageHeight] = useState(600)
-  const [measureWidth, setMeasureWidth] = useState(DEFAULT_PAGE_WIDTH)
+  const [measureWidth, setMeasureWidth] = useState(READER_DEFAULTS.pageWidth)
+
+  const theme = resolveTheme(themeId)
+  const font = resolveFont(fontFamily)
 
   useEffect(() => {
     void (async () => {
@@ -34,10 +46,12 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       if (d.progress) {
         setChapterIndex(d.progress.chapterIndex)
         setPageIndex(d.progress.pageIndex)
-        setFontSize(d.progress.fontSize)
-        setLineHeight(d.progress.lineHeight)
-        setPageWidth(d.progress.pageWidth)
-        setColumns(d.progress.columns ?? DEFAULT_COLUMNS)
+        setFontSize(d.progress.fontSize ?? READER_DEFAULTS.fontSize)
+        setLineHeight(d.progress.lineHeight ?? READER_DEFAULTS.lineHeight)
+        setPageWidth(d.progress.pageWidth ?? READER_DEFAULTS.pageWidth)
+        setColumns(d.progress.columns ?? READER_DEFAULTS.columns)
+        setThemeId(d.progress.themeId ?? READER_DEFAULTS.themeId)
+        setFontFamily(d.progress.fontFamily ?? READER_DEFAULTS.fontFamily)
       }
     })()
   }, [bookId])
@@ -81,12 +95,13 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       el.style.width = `${measureWidth}px`
       el.style.fontSize = `${fontSize}px`
       el.style.lineHeight = String(lineHeight)
+      el.style.fontFamily = font.stack
       el.style.padding = '36px 44px'
       el.style.columnCount = String(columns)
       el.style.columnGap = `${COLUMN_GAP}px`
       return el.offsetHeight
     },
-    [measureWidth, fontSize, lineHeight, columns]
+    [measureWidth, fontSize, lineHeight, columns, font]
   )
 
   const { pages, pageCount } = useMemo(
@@ -111,11 +126,24 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
         fontSize,
         lineHeight,
         pageWidth,
-        columns
+        columns,
+        themeId,
+        fontFamily
       })
     }, 500)
     return () => window.clearTimeout(timer)
-  }, [detail, bookId, chapterIndex, clampedPage, fontSize, lineHeight, pageWidth, columns])
+  }, [
+    detail,
+    bookId,
+    chapterIndex,
+    clampedPage,
+    fontSize,
+    lineHeight,
+    pageWidth,
+    columns,
+    themeId,
+    fontFamily
+  ])
 
   const goToChapter = (i: number, toLast = false): void => {
     const target = Math.max(0, Math.min(i, chapters.length - 1))
@@ -142,6 +170,10 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
+      if (settingsOpen) {
+        if (e.key === 'Escape') setSettingsOpen(false)
+        return
+      }
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault()
         nextPage()
@@ -154,16 +186,42 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  const adjust = (kind: 'font' | 'line' | 'width', delta: number): void => {
-    if (kind === 'font') setFontSize((v) => Math.min(30, Math.max(14, v + delta)))
-    if (kind === 'line') setLineHeight((v) => Math.round(Math.min(2.4, Math.max(1.5, v + delta * 0.1)) * 10) / 10)
-    if (kind === 'width') setPageWidth((v) => Math.min(960, Math.max(560, v + delta * 40)))
+  const updateSettings = (patch: Partial<ReaderSettings>): void => {
+    if (patch.fontSize !== undefined) setFontSize(clampNumber(14, 30, patch.fontSize))
+    if (patch.lineHeight !== undefined) {
+      setLineHeight(Math.round(clampNumber(1.5, 2.4, patch.lineHeight) * 10) / 10)
+    }
+    if (patch.pageWidth !== undefined) setPageWidth(clampNumber(560, 960, patch.pageWidth))
+    if (patch.columns !== undefined) {
+      const n = Math.min(3, Math.max(1, Math.round(patch.columns)))
+      if (n !== columns) {
+        setColumns(n)
+        setPageIndex(0)
+      }
+    }
+    if (patch.themeId !== undefined) setThemeId(patch.themeId)
+    if (patch.fontFamily !== undefined) setFontFamily(patch.fontFamily)
   }
 
-  const setColumnCount = (n: number): void => {
-    const clamped = Math.min(3, Math.max(1, n))
-    setColumns(clamped)
+  const resetSettings = (): void => {
+    setFontSize(READER_DEFAULTS.fontSize)
+    setLineHeight(READER_DEFAULTS.lineHeight)
+    setPageWidth(READER_DEFAULTS.pageWidth)
+    setColumns(READER_DEFAULTS.columns)
+    setThemeId(READER_DEFAULTS.themeId)
+    setFontFamily(READER_DEFAULTS.fontFamily)
     setPageIndex(0)
+  }
+
+  const onBodyClick = (e: ReactMouseEvent<HTMLDivElement>): void => {
+    if (settingsOpen) return
+    // 拖动选中文字后松开的 click 不应触发翻页/设置
+    if ((window.getSelection()?.toString() ?? '').length > 0) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const zone = getReaderZone(e.clientX - rect.left, rect.width)
+    if (zone === 'left') prevPage()
+    else if (zone === 'right') nextPage()
+    else setSettingsOpen(true)
   }
 
   const applyChapters = (newChapters: ChapterMeta[]): void => {
@@ -186,7 +244,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
 
       <header className="reader-topbar">
         <button className="btn ghost" onClick={onBack}>
-          ‹ 书架
+          ← 书架
         </button>
         <div className="reader-title" title={chapterTitle}>
           {chapterTitle}
@@ -200,58 +258,39 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
               目录修正
             </button>
           )}
-          <span className="tool-group">
-            <button className="btn small" onClick={() => adjust('font', -1)}>
-              A−
-            </button>
-            <button className="btn small" onClick={() => adjust('font', 1)}>
-              A+
-            </button>
-          </span>
-          <span className="tool-group">
-            <button className="btn small" onClick={() => adjust('line', -1)}>
-              行距−
-            </button>
-            <button className="btn small" onClick={() => adjust('line', 1)}>
-              行距+
-            </button>
-          </span>
-          <span className="tool-group">
-            <button className="btn small" onClick={() => adjust('width', -1)}>
-              页宽−
-            </button>
-            <button className="btn small" onClick={() => adjust('width', 1)}>
-              页宽+
-            </button>
-          </span>
-          <span className="tool-group">
-            <button className="btn small" onClick={() => setColumnCount(columns - 1)} disabled={columns <= 1}>
-              栏数−
-            </button>
-            <span className="tool-value">{columns} 栏</span>
-            <button className="btn small" onClick={() => setColumnCount(columns + 1)} disabled={columns >= 3}>
-              栏数+
-            </button>
-          </span>
+          <button className="btn small" onClick={() => setSettingsOpen(true)}>
+            设置
+          </button>
         </div>
       </header>
 
-      <div className="reader-body">
-        <button className="page-zone left" onClick={prevPage} aria-label="上一页" />
+      <div className="reader-body" onClick={onBodyClick}>
         <main
           ref={pageRef}
           className="reader-page"
-          style={{ maxWidth: pageWidth, columnCount: columns, columnGap: `${COLUMN_GAP}px` }}
+          style={{
+            maxWidth: pageWidth,
+            columnCount: columns,
+            columnGap: `${COLUMN_GAP}px`,
+            background: theme.bg,
+            color: theme.text
+          }}
         >
-          <p className="reader-text" style={{ fontSize: `${fontSize}px`, lineHeight }}>
+          <p
+            className="reader-text"
+            style={{ fontSize: `${fontSize}px`, lineHeight, fontFamily: font.stack }}
+          >
             {pages[clampedPage]}
           </p>
         </main>
-        <button className="page-zone right" onClick={nextPage} aria-label="下一页" />
       </div>
 
       <footer className="reader-footer">
-        <button className="btn small" onClick={prevPage} disabled={chapterIndex === 0 && clampedPage === 0}>
+        <button
+          className="btn small"
+          onClick={prevPage}
+          disabled={chapterIndex === 0 && clampedPage === 0}
+        >
           上一页
         </button>
         <span>
@@ -266,13 +305,25 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
         </button>
       </footer>
 
+      <SettingsPanel
+        open={settingsOpen}
+        settings={{ fontSize, lineHeight, pageWidth, columns, themeId, fontFamily }}
+        onChange={updateSettings}
+        onReset={resetSettings}
+        onClose={() => setSettingsOpen(false)}
+      />
+
       {showToc && (
         <div className="toc-overlay" onClick={() => setShowToc(false)}>
           <aside className="toc-panel" onClick={(e) => e.stopPropagation()}>
             <h3>目录</h3>
             <ul className="toc-list">
               {chapters.map((c, i) => (
-                <li key={i} className={i === chapterIndex ? 'active' : ''} onClick={() => goToChapter(i)}>
+                <li
+                  key={i}
+                  className={i === chapterIndex ? 'active' : ''}
+                  onClick={() => goToChapter(i)}
+                >
                   {c.title}
                 </li>
               ))}

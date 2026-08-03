@@ -45,6 +45,10 @@ export interface Progress {
   pageWidth: number
   /** 阅读栏数（1/2/3），默认 1 */
   columns?: number
+  /** 阅读区主题（paper/green/sepia/night），缺省回退默认 */
+  themeId?: string
+  /** 阅读字体（字体选项 id），缺省回退系统默认 */
+  fontFamily?: string
   updatedAt: number
 }
 

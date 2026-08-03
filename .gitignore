@@ -8,6 +8,10 @@ release/
 coverage/
 .vite/
 
+# local deliverables & project plan (not uploaded)
+outputs/
+docs/
+
 # logs
 *.log
 npm-debug.log*

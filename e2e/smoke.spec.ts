@@ -6,7 +6,11 @@ import { join } from 'path'
 test('import → shelf → open → read → progress saved', async () => {
   const libDir = mkdtempSync(join(tmpdir(), 'catreader-e2e-'))
   const txtPath = join(libDir, '源文件.txt')
-  writeFileSync(txtPath, '楔子\n楔子内容。\n第一章 相遇\n正文第一段。\n第二章 分别\n正文第二段。', 'utf-8')
+  writeFileSync(
+    txtPath,
+    '楔子\n楔子内容。\n第一章 相遇\n正文第一段。\n第二章 分别\n正文第二段。',
+    'utf-8'
+  )
 
   const app = await electron.launch({
     args: ['.'],
@@ -31,14 +35,25 @@ test('import → shelf → open → read → progress saved', async () => {
     await expect(win.locator('.reader-page')).toBeVisible()
     await expect(win.locator('.reader-text')).toContainText('楔子内容')
 
-    // Flip to page 2 and wait for the debounced progress save
-    await win.locator('.page-zone.right').click()
+    // Flip to page 2 by clicking the right third of the reading area
+    const bodyBox = await win.locator('.reader-body').boundingBox()
+    if (!bodyBox) throw new Error('reader body not measurable')
+    await win.mouse.click(bodyBox.x + bodyBox.width * 0.9, bodyBox.y + bodyBox.height * 0.5)
+    await win.waitForTimeout(1200)
+
+    // The middle third opens the settings panel; theme changes persist
+    await win.mouse.click(bodyBox.x + bodyBox.width * 0.5, bodyBox.y + bodyBox.height * 0.5)
+    await expect(win.locator('.settings-sheet')).toBeVisible()
+    await win.locator('.theme-option[data-theme="night"]').click()
+    await win.locator('.settings-close').click()
+    await expect(win.locator('.settings-sheet')).not.toBeVisible()
     await win.waitForTimeout(1200)
 
     const books = await win.evaluate(async () => window.api.getBooks())
     expect(books[0].lastReadAt).toBeTruthy()
     const detail = await win.evaluate(async (id: string) => window.api.openBook(id), books[0].id)
     expect(detail.progress?.pageIndex).toBeGreaterThan(0)
+    expect(detail.progress?.themeId).toBe('night')
   } finally {
     await app.close()
     rmSync(libDir, { recursive: true, force: true })
