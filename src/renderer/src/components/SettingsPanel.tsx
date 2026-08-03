@@ -84,8 +84,8 @@ export default function SettingsPanel({
         </header>
 
         <div className="settings-body">
-          <div className="settings-section">
-            <div className="settings-section-title">主题</div>
+          <div className="settings-group">
+            <div className="settings-group-label">主题</div>
             <div className="theme-grid">
               {READER_THEMES.map((t) => (
                 <button
@@ -107,8 +107,8 @@ export default function SettingsPanel({
             </div>
           </div>
 
-          <div className="settings-section">
-            <div className="settings-section-title">分栏</div>
+          <div className="settings-group">
+            <div className="settings-group-label">分栏</div>
             <div className="segmented" role="group" aria-label="分栏">
               {[1, 2, 3].map((n) => (
                 <button
@@ -123,38 +123,8 @@ export default function SettingsPanel({
             </div>
           </div>
 
-          <div className="settings-section">
-            <SliderRow
-              label="字号"
-              display={`${settings.fontSize} px`}
-              min={READER_LIMITS.fontSize.min}
-              max={READER_LIMITS.fontSize.max}
-              step={1}
-              value={settings.fontSize}
-              onChange={(v) => onChange({ fontSize: v })}
-            />
-            <SliderRow
-              label="行距"
-              display={settings.lineHeight.toFixed(1)}
-              min={READER_LIMITS.lineHeight.min}
-              max={READER_LIMITS.lineHeight.max}
-              step={0.1}
-              value={settings.lineHeight}
-              onChange={(v) => onChange({ lineHeight: v })}
-            />
-            <SliderRow
-              label="页宽"
-              display={`${settings.pageWidth} px`}
-              min={READER_LIMITS.pageWidth.min}
-              max={READER_LIMITS.pageWidth.max}
-              step={40}
-              value={settings.pageWidth}
-              onChange={(v) => onChange({ pageWidth: v })}
-            />
-          </div>
-
-          <div className="settings-section">
-            <div className="settings-section-title">字体</div>
+          <div className="settings-group">
+            <div className="settings-group-label">字体</div>
             <div className="font-row" role="group" aria-label="字体">
               {READER_FONTS.map((f) => (
                 <button
@@ -169,16 +139,49 @@ export default function SettingsPanel({
               ))}
             </div>
           </div>
-        </div>
 
-        <footer className="settings-footer">
-          <button className="btn ghost" onClick={onReset}>
-            恢复默认
-          </button>
-          <button className="btn primary" onClick={onClose}>
-            完成
-          </button>
-        </footer>
+          <div className="settings-group">
+            <div className="settings-group-label">排版</div>
+            <div className="slider-list">
+              <SliderRow
+                label="字号"
+                display={`${settings.fontSize} px`}
+                min={READER_LIMITS.fontSize.min}
+                max={READER_LIMITS.fontSize.max}
+                step={1}
+                value={settings.fontSize}
+                onChange={(v) => onChange({ fontSize: v })}
+              />
+              <SliderRow
+                label="行距"
+                display={settings.lineHeight.toFixed(1)}
+                min={READER_LIMITS.lineHeight.min}
+                max={READER_LIMITS.lineHeight.max}
+                step={0.1}
+                value={settings.lineHeight}
+                onChange={(v) => onChange({ lineHeight: v })}
+              />
+              <SliderRow
+                label="页宽"
+                display={`${settings.pageWidth} px`}
+                min={READER_LIMITS.pageWidth.min}
+                max={READER_LIMITS.pageWidth.max}
+                step={40}
+                value={settings.pageWidth}
+                onChange={(v) => onChange({ pageWidth: v })}
+              />
+            </div>
+          </div>
+
+          <div className="settings-actions">
+            <button className="btn ghost" onClick={onReset}>
+              恢复默认
+            </button>
+            <button className="btn primary" onClick={onClose}>
+              完成
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   )

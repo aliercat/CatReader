@@ -303,7 +303,7 @@ button {
   position: fixed;
   inset: 0;
   z-index: 45;
-  background: rgba(18, 22, 30, 0.28);
+  background: rgba(18, 22, 30, 0.16);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.22s ease, visibility 0s linear 0.22s;
@@ -339,15 +339,15 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px 12px;
+  padding: 9px 16px;
   border-bottom: 1px solid var(--border);
 }
 
 .settings-header h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 
 .settings-close {
@@ -363,39 +363,43 @@ button {
 }
 
 .settings-body {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 16px 20px 8px;
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 12px 16px 14px;
   flex: 1;
   overflow-y: auto;
   min-height: 0;
 }
 
-.settings-section-title {
-  font-size: 12px;
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-group-label {
+  font-size: 11px;
   color: var(--muted);
-  margin-bottom: 10px;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.5px;
 }
 
 .theme-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  display: flex;
+  gap: 8px;
 }
 
 .theme-option {
   border: 1px solid var(--border);
   background: var(--panel);
-  border-radius: 10px;
-  padding: 10px 8px 8px;
+  border-radius: 8px;
+  padding: 6px 6px 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -410,19 +414,19 @@ button {
 
 .theme-swatch {
   position: relative;
-  width: 58px;
-  height: 74px;
-  border-radius: 5px;
-  padding: 10px 8px;
+  width: 40px;
+  height: 54px;
+  border-radius: 4px;
+  padding: 8px 6px;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .theme-swatch i {
   display: block;
-  height: 3px;
+  height: 2px;
   border-radius: 2px;
   background: currentColor;
   opacity: 0.75;
@@ -434,15 +438,15 @@ button {
 
 .theme-check {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 16px;
-  height: 16px;
+  top: 3px;
+  right: 3px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  font-size: 11px;
-  line-height: 16px;
+  font-size: 10px;
+  line-height: 14px;
   text-align: center;
   display: none;
 }
@@ -452,26 +456,25 @@ button {
 }
 
 .theme-name {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text);
 }
 
 .segmented {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  display: inline-flex;
+  gap: 3px;
   background: #eef0f4;
-  border-radius: 9px;
-  padding: 4px;
+  border-radius: 8px;
+  padding: 3px;
 }
 
 .segmented button {
   border: none;
   background: transparent;
   color: var(--muted);
-  border-radius: 6px;
-  padding: 7px 0;
-  font-size: 13px;
+  border-radius: 5px;
+  padding: 5px 11px;
+  font-size: 12px;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -482,31 +485,37 @@ button {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.settings-row + .settings-row {
-  margin-top: 12px;
+.slider-list {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.settings-row {
+  width: 168px;
 }
 
 .settings-row-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .settings-row-label {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text);
 }
 
 .settings-row-value {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
 .settings-range {
   width: 100%;
-  height: 20px;
+  height: 18px;
   appearance: none;
   background: transparent;
   margin: 0;
@@ -520,28 +529,27 @@ button {
 
 .settings-range::-webkit-slider-thumb {
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-  margin-top: -6px;
+  margin-top: -5px;
   cursor: pointer;
 }
 
 .font-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  display: flex;
+  gap: 6px;
 }
 
 .font-chip {
   border: 1px solid var(--border);
   background: var(--panel);
-  border-radius: 8px;
-  padding: 8px 4px;
-  font-size: 13px;
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 12px;
   color: var(--text);
   transition: border-color 0.15s ease, color 0.15s ease;
 }
@@ -556,21 +564,25 @@ button {
   font-weight: 600;
 }
 
-.settings-footer {
+.settings-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px 16px;
-  border-top: 1px solid var(--border);
+  gap: 8px;
+  margin-left: auto;
+  align-self: flex-end;
+  padding-bottom: 2px;
 }
 
-.settings-footer .btn {
-  min-width: 96px;
+.settings-actions .btn {
+  min-width: 78px;
+  padding: 6px 12px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .settings-overlay,
-  .settings-sheet {
+  .settings-sheet,
+  .toc-overlay,
+  .toc-panel {
     transition: none;
   }
 }
@@ -581,6 +593,15 @@ button {
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
   z-index: 40;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+
+.toc-overlay.open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.2s ease;
 }
 
 .toc-panel {
@@ -592,18 +613,47 @@ button {
   background: var(--panel);
   box-shadow: 2px 0 16px rgba(0, 0, 0, 0.18);
   padding: 16px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.26s cubic-bezier(0.22, 0.8, 0.3, 1);
 }
 
-.toc-panel h3 {
-  margin: 0 0 12px;
-  font-size: 16px;
+.toc-overlay.open .toc-panel {
+  transform: translateX(0);
+}
+
+.toc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.toc-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.toc-close {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 2px 6px;
+}
+
+.toc-close:hover {
+  color: var(--text);
+  background: none;
 }
 
 .toc-list {
   list-style: none;
   margin: 0;
   padding: 0;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .toc-list li {

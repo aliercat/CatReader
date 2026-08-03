@@ -313,24 +313,27 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
         onClose={() => setSettingsOpen(false)}
       />
 
-      {showToc && (
-        <div className="toc-overlay" onClick={() => setShowToc(false)}>
-          <aside className="toc-panel" onClick={(e) => e.stopPropagation()}>
+      <div className={`toc-overlay${showToc ? ' open' : ''}`} onClick={() => setShowToc(false)}>
+        <aside className="toc-panel" onClick={(e) => e.stopPropagation()}>
+          <div className="toc-header">
             <h3>目录</h3>
-            <ul className="toc-list">
-              {chapters.map((c, i) => (
-                <li
-                  key={i}
-                  className={i === chapterIndex ? 'active' : ''}
-                  onClick={() => goToChapter(i)}
-                >
-                  {c.title}
-                </li>
-              ))}
-            </ul>
-          </aside>
-        </div>
-      )}
+            <button className="toc-close" onClick={() => setShowToc(false)} aria-label="关闭目录">
+              ✕
+            </button>
+          </div>
+          <ul className="toc-list">
+            {chapters.map((c, i) => (
+              <li
+                key={i}
+                className={i === chapterIndex ? 'active' : ''}
+                onClick={() => goToChapter(i)}
+              >
+                {c.title}
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
 
       {showTocEditor && (
         <TocEditor
