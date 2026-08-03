@@ -1,6 +1,6 @@
 {
   "name": "catreader",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Windows 本地小说阅读器：txt/epub 导入、目录解析、书架、分页阅读",
   "main": "./out/main/index.js",
   "author": "aliercat",

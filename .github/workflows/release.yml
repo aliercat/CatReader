@@ -36,8 +36,16 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Package and publish Windows installer
-        run: pnpm exec electron-builder --win --publish always
+      - name: Package Windows installer
+        run: pnpm exec electron-builder --win --publish never
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/catreader-*.exe
+            dist/catreader-*.exe.blockmap
+            dist/latest.yml
+          generate_release_notes: true
