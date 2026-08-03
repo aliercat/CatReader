@@ -25,3 +25,7 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 npmRebuild: false
+publish:
+  provider: github
+  owner: aliercat
+  repo: CatReader

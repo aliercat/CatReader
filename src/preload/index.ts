@@ -14,7 +14,18 @@ const api: Api = {
     ipcRenderer.invoke('books:saveProgress', bookId, progress),
   updateToc: (bookId: string, options: TocUpdateOptions): Promise<ChapterMeta[]> =>
     ipcRenderer.invoke('books:updateToc', bookId, options),
-  deleteBook: (id: string): Promise<void> => ipcRenderer.invoke('books:delete', id)
+  deleteBook: (id: string): Promise<void> => ipcRenderer.invoke('books:delete', id),
+  quitAndInstall: (): Promise<void> => ipcRenderer.invoke('app:quitAndInstall'),
+  onUpdateEvent: (callback) => {
+    const onAvailable = (): void => callback('available')
+    const onDownloaded = (): void => callback('downloaded')
+    ipcRenderer.on('update:available', onAvailable)
+    ipcRenderer.on('update:downloaded', onDownloaded)
+    return () => {
+      ipcRenderer.removeListener('update:available', onAvailable)
+      ipcRenderer.removeListener('update:downloaded', onDownloaded)
+    }
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

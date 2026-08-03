@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, protocol } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { readFile } from 'fs/promises'
 import { extname, join, resolve } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -95,6 +96,20 @@ app.whenReady().then(() => {
   const progressStore = new ProgressStore(join(libraryRoot, 'progress.json'))
   const importService = new ImportService(bookStore, progressStore, new TextCache())
   registerIpc({ bookStore, progressStore, importService })
+
+  // 自动更新：仅打包版启用；无网络或仓库无新版本时静默跳过
+  if (app.isPackaged && !process.env.CATREADER_DISABLE_UPDATES) {
+    autoUpdater.autoDownload = true
+    autoUpdater.on('update-available', () => {
+      for (const w of BrowserWindow.getAllWindows()) w.webContents.send('update:available')
+    })
+    autoUpdater.on('update-downloaded', () => {
+      for (const w of BrowserWindow.getAllWindows()) w.webContents.send('update:downloaded')
+    })
+    void autoUpdater.checkForUpdatesAndNotify().catch(() => {
+      // 静默失败
+    })
+  }
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

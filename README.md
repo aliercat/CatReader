@@ -63,6 +63,17 @@ pnpm run build:win
 
 产物输出到 `dist/`，NSIS 安装包同时复制一份到 `outputs/`。
 
+## 发布新版本（自动更新）
+
+应用内置自动更新（electron-updater）：发布版本时打一个 `v*` 标签并推送，GitHub Actions
+会自动完成 测试 → 打包 → 发布 GitHub Release，用户端启动后自动检测并下载新版本，重启即生效。
+
+```bash
+git tag v0.3.0 && git push origin v0.3.0
+```
+
+> 首次配置请在仓库 Settings → Actions → General 中确认 Actions 权限允许创建 Release。
+
 ## 目录结构
 
 ```text

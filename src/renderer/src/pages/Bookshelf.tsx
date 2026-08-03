@@ -16,6 +16,7 @@ export default function Bookshelf({ onOpen }: { onOpen: (id: string) => void }) 
   const [query, setQuery] = useState('')
   const [format, setFormat] = useState<ShelfFormatFilter>('all')
   const [sort, setSort] = useState<ShelfSort>('recent')
+  const [updateState, setUpdateState] = useState<'available' | 'downloaded' | null>(null)
 
   const refresh = useCallback(async () => {
     setBooks(await window.api.getBooks())
@@ -25,6 +26,8 @@ export default function Bookshelf({ onOpen }: { onOpen: (id: string) => void }) 
   useEffect(() => {
     void refresh()
   }, [refresh])
+
+  useEffect(() => window.api.onUpdateEvent((e) => setUpdateState(e)), [])
 
   const showNotice = (msg: string): void => {
     setNotice(msg)
@@ -114,6 +117,18 @@ export default function Bookshelf({ onOpen }: { onOpen: (id: string) => void }) 
         </div>
       )}
       {notice && <div className="notice">{notice}</div>}
+      {updateState && (
+        <div className="update-bar">
+          <span>
+            {updateState === 'available' ? '发现新版本，正在后台下载…' : '新版本已下载，重启后生效'}
+          </span>
+          {updateState === 'downloaded' && (
+            <button className="btn small" onClick={() => void window.api.quitAndInstall()}>
+              立即重启
+            </button>
+          )}
+        </div>
+      )}
       {loading ? (
         <p className="empty">加载中…</p>
       ) : books.length === 0 ? (

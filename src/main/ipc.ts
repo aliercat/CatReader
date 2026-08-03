@@ -1,4 +1,5 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import type { TocUpdateOptions } from '../shared/types'
 import { BookStore } from './stores/book-store'
 import { ProgressStore } from './stores/progress-store'
@@ -87,4 +88,8 @@ export function registerIpc({ bookStore, progressStore, importService }: Service
   })
 
   ipcMain.handle('books:delete', (_event, id: string) => importService.deleteBook(id))
+
+  ipcMain.handle('app:quitAndInstall', () => {
+    autoUpdater.quitAndInstall()
+  })
 }

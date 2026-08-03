@@ -93,4 +93,7 @@ export interface Api {
   saveProgress(bookId: string, progress: Omit<Progress, 'updatedAt'>): Promise<void>
   updateToc(bookId: string, options: TocUpdateOptions): Promise<ChapterMeta[]>
   deleteBook(id: string): Promise<void>
+  quitAndInstall(): Promise<void>
+  /** 订阅自动更新事件（available: 发现新版本 / downloaded: 下载完成），返回取消订阅函数 */
+  onUpdateEvent(callback: (event: 'available' | 'downloaded') => void): () => void
 }
