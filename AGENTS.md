@@ -49,6 +49,7 @@ CatReader — 本地小说阅读器（Windows 桌面应用），支持 txt / epu
 
 ## Known environment gotchas (this machine)
 
-- **pnpm 版本不一致**：当前 `node_modules/.modules.yaml` 记录的是 pnpm 11.18.0。Codex 内置终端解析到运行时自带的 pnpm 11.9.0，会触发"删除并重装 modules 目录"的提示。**不要答应删除**；请使用全局 pnpm（`C:\Users\jinzhenyi\AppData\Roaming\npm\pnpm.cmd`，11.18.0）或普通终端运行 pnpm 命令。
+- **pnpm 一致性（已修复）**：`node_modules/.modules.yaml` 记录 pnpm 11.18.0 + store `work/pnpm-home/AppData/pnpm/store/v11`。已把 Codex 运行时自带的 pnpm 升级为 11.18.0（`dependencies\node\node_modules\pnpm` 为真实副本），并用 `pnpm config set store-dir` 在 `%LOCALAPPDATA%\pnpm\config\config.yaml` 固定同一 store，内置终端与普通终端都不会再触发"删除 modules 目录"提示。注意：若 Codex 重新下载/更新运行时，内置终端的 pnpm 版本会回退，需重新对齐；store 配置为机器级（`pnpm config delete store-dir` 可撤销）。
+- **Codex 运行时依赖（已恢复，一处例外）**：运行时 `dependencies\node\node_modules` 曾因 npm 误清理损坏，已按 `.pnpm/lock.yaml` 的精确版本恢复全部公开依赖；私有包 `@oai/artifact-tool`（本地 tarball 已丢失、npm 源无此包）暂缺，仅影响 Codex 富文件预览工具。如需彻底恢复，可删除 `C:\Users\jinzhenyi\.cache\codex-runtimes\codex-primary-runtime` 后重启 Codex 重新下载（会结束当前会话并重置 pnpm 对齐）。
 - **Electron 安装脚本在 Node 24 下静默卡死**：electron 的 postinstall（extract-zip/yauzl）在 Node 24 上解压不完整且无报错，表现为 `dist/` 只有部分文件、缺少 `path.txt`，启动报 "Electron failed to install correctly"。若 node_modules 被重装，需重新修复：把 `%LOCALAPPDATA%\electron\Cache` 里对应版本的 zip 解压到 `.pnpm\electron@...\node_modules\electron\dist`，并写入内容为 `electron.exe` 的 `path.txt`。全新安装建议用 Node 22 LTS 跑 `pnpm install`。
 - 沙箱 shell 读部分 node_modules 文件会 EPERM；从 agent 沙箱执行 pnpm/typecheck/test/build 时需提权运行。
