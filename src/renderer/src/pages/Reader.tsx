@@ -257,8 +257,13 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       <div ref={measureRef} className="page-measure" aria-hidden="true" />
 
       <header className="reader-topbar">
-        <button className="btn ghost" onClick={onBack}>
-          ← 书架
+        <button
+          className="btn ghost btn-back"
+          onClick={onBack}
+          aria-label="返回书架"
+          title="返回书架"
+        >
+          ←
         </button>
         <div className="reader-title" title={chapterTitle}>
           {chapterTitle}
