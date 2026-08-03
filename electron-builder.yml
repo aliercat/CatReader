@@ -29,3 +29,4 @@ publish:
   provider: github
   owner: aliercat
   repo: CatReader
+  releaseType: release
