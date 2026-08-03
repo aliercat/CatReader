@@ -15,11 +15,22 @@ import {
 import TocEditor from '../components/TocEditor'
 import SettingsPanel from '../components/SettingsPanel'
 import type { InsertPosition } from '../components/TocEditor'
+import type { UiThemeMode } from '../lib/ui-theme'
 
 const COLUMN_GAP = 24
 const PAGE_MIN_HEIGHT = 200
 
-export default function Reader({ bookId, onBack }: { bookId: string; onBack: () => void }) {
+export default function Reader({
+  bookId,
+  onBack,
+  uiTheme,
+  onUiThemeChange
+}: {
+  bookId: string
+  onBack: () => void
+  uiTheme: UiThemeMode
+  onUiThemeChange: (mode: UiThemeMode) => void
+}) {
   const [detail, setDetail] = useState<BookDetail | null>(null)
   const [chapterIndex, setChapterIndex] = useState(0)
   const [pageIndex, setPageIndex] = useState(0)
@@ -396,6 +407,8 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
         onChange={updateSettings}
         onReset={resetSettings}
         onClose={() => setSettingsOpen(false)}
+        uiTheme={uiTheme}
+        onUiThemeChange={onUiThemeChange}
       />
 
       <div className={`toc-overlay${showToc ? ' open' : ''}`} onClick={() => setShowToc(false)}>

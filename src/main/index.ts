@@ -27,6 +27,11 @@ protocol.registerSchemesAsPrivileged([
   }
 ])
 
+// 端到端测试隔离：把 userData（localStorage 等）也重定向到测试目录，避免污染真实数据
+if (process.env.CATREADER_E2E_USERDATA) {
+  app.setPath('userData', process.env.CATREADER_E2E_USERDATA)
+}
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({

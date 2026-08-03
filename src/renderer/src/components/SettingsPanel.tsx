@@ -6,6 +6,7 @@ import {
   READER_THEMES,
   type ReaderSettings
 } from '../lib/reader-presets'
+import type { UiThemeMode } from '../lib/ui-theme'
 
 interface SettingsPanelProps {
   open: boolean
@@ -13,6 +14,8 @@ interface SettingsPanelProps {
   onChange: (patch: Partial<ReaderSettings>) => void
   onReset: () => void
   onClose: () => void
+  uiTheme: UiThemeMode
+  onUiThemeChange: (mode: UiThemeMode) => void
 }
 
 function SliderRow({
@@ -57,7 +60,9 @@ export default function SettingsPanel({
   settings,
   onChange,
   onReset,
-  onClose
+  onClose,
+  uiTheme,
+  onUiThemeChange
 }: SettingsPanelProps): JSX.Element {
   const panelRef = useRef<HTMLElement>(null)
 
@@ -84,6 +89,28 @@ export default function SettingsPanel({
         </header>
 
         <div className="settings-body">
+          <div className="settings-group">
+            <div className="settings-group-label">外观</div>
+            <div className="font-row" role="group" aria-label="外观">
+              {(
+                [
+                  ['system', '跟随系统'],
+                  ['light', '亮色'],
+                  ['dark', '深色']
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  className={`font-chip${uiTheme === mode ? ' active' : ''}`}
+                  aria-pressed={uiTheme === mode}
+                  onClick={() => onUiThemeChange(mode)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="settings-group">
             <div className="settings-group-label">主题</div>
             <div className="theme-grid">
