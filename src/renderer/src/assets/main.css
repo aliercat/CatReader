@@ -1026,3 +1026,198 @@ mark {
   font-size: 13px;
   min-width: 0;
 }
+
+/* ---------- custom title bar ---------- */
+.shelf-header,
+.reader-topbar {
+  -webkit-app-region: drag;
+}
+
+.shelf-header .btn,
+.shelf-header .app-menu,
+.shelf-header input,
+.shelf-header-actions,
+.reader-topbar .btn,
+.reader-topbar .app-menu,
+.reader-topbar input,
+.window-controls {
+  -webkit-app-region: no-drag;
+}
+
+.shelf-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.window-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+}
+
+.wc-btn {
+  width: 32px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.wc-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.wc-close:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ---------- app menu ---------- */
+.app-menu {
+  position: relative;
+}
+
+.btn-menu {
+  font-size: 15px;
+  line-height: 1;
+  padding: 5px 9px;
+}
+
+.menu-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 90;
+  min-width: 300px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menu-section-title {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.menu-update-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.menu-update-line {
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------- about dialog ---------- */
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 95;
+}
+
+.about-dialog {
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 20px 24px;
+  width: 360px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.about-dialog h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.about-version {
+  color: var(--muted);
+  margin: 0;
+  font-size: 13px;
+}
+
+.about-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.about-link {
+  text-align: center;
+  text-decoration: none;
+}
+
+.about-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* ---------- update progress ---------- */
+.update-bar.downloading {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 320px;
+}
+
+.update-bar.error {
+  background: rgba(229, 72, 77, 0.12);
+  border-color: var(--danger);
+}
+
+.update-progress {
+  height: 5px;
+  margin-top: 4px;
+  background: var(--track);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.update-progress i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}

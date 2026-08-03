@@ -1,18 +1,34 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
-import type { TocUpdateOptions } from '../shared/types'
+import type { AppSettings, TocUpdateOptions, UpdateState } from '../shared/types'
 import { BookStore } from './stores/book-store'
 import { ProgressStore } from './stores/progress-store'
 import { ImportService } from './import-service'
+import { SettingsStore } from './stores/settings-store'
+import {
+  checkForUpdates,
+  getUpdateState,
+  hasAutoCheckStarted,
+  markAutoCheckStarted,
+  setTestUpdateState
+} from './updater'
 import { DEFAULT_PRESET_IDS, parseTxtToc, splitByLines } from './parsers/txt-parser'
 
 interface Services {
   bookStore: BookStore
   progressStore: ProgressStore
   importService: ImportService
+  settingsStore: SettingsStore
+  libraryRoot: string
 }
 
-export function registerIpc({ bookStore, progressStore, importService }: Services): void {
+export function registerIpc({
+  bookStore,
+  progressStore,
+  importService,
+  settingsStore,
+  libraryRoot
+}: Services): void {
   ipcMain.handle('dialog:openFiles', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     const result = await dialog.showOpenDialog(win!, {
@@ -92,4 +108,52 @@ export function registerIpc({ bookStore, progressStore, importService }: Service
   ipcMain.handle('app:quitAndInstall', () => {
     autoUpdater.quitAndInstall()
   })
+
+  ipcMain.handle('settings:get', () => settingsStore.get())
+
+  ipcMain.handle('settings:set', (_event, patch: Partial<AppSettings>) => {
+    const next = settingsStore.set(patch)
+    // 切回自动更新时，若启动阶段未检查过（此前为手动模式），立即补一次检查
+    if (next.updateMode === 'auto' && !hasAutoCheckStarted()) {
+      markAutoCheckStarted()
+      void checkForUpdates()
+    }
+    return next
+  })
+
+  ipcMain.handle('update:check', () => checkForUpdates())
+
+  ipcMain.handle('update:getState', () => getUpdateState())
+
+  ipcMain.handle('app:getInfo', () => ({
+    name: app.getName(),
+    version: app.getVersion(),
+    homepage: 'https://github.com/aliercat/CatReader'
+  }))
+
+  ipcMain.handle('app:openLibrary', () => shell.openPath(libraryRoot))
+
+  ipcMain.handle('window:minimize', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize()
+  })
+
+  ipcMain.handle('window:toggleMaximize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    if (win.isMaximized()) win.unmaximize()
+    else win.maximize()
+  })
+
+  ipcMain.handle('window:close', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close()
+  })
+
+  ipcMain.handle('window:isMaximized', (event) => BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false)
+
+  // e2e 专用：注入模拟更新状态，仅在端到端测试环境注册
+  if (process.env.CATREADER_E2E_USERDATA) {
+    ipcMain.handle('update:setTestState', (_event, patch: Partial<UpdateState>) => {
+      setTestUpdateState(patch)
+    })
+  }
 }

@@ -84,6 +84,52 @@ export interface ImportResult {
   error?: string
 }
 
+export type UpdateMode = 'auto' | 'manual'
+
+export interface AppSettings {
+  updateMode: UpdateMode
+}
+
+export type UpdatePhase =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'error'
+  | 'latest'
+  | 'dev'
+
+export interface UpdateState {
+  phase: UpdatePhase
+  /** 新版本号（available/downloading/downloaded 时提供） */
+  version?: string
+  /** 下载进度百分比 0-100 */
+  percent?: number
+  /** 已下载字节数 */
+  transferred?: number
+  /** 总字节数 */
+  total?: number
+  /** 下载速度（字节/秒） */
+  bytesPerSecond?: number
+  /** 错误信息（error 时提供） */
+  message?: string
+}
+
+export interface AppInfo {
+  name: string
+  version: string
+  homepage: string
+}
+
+export interface WindowControlsApi {
+  minimize(): Promise<void>
+  toggleMaximize(): Promise<void>
+  close(): Promise<void>
+  isMaximized(): Promise<boolean>
+  onMaximizedChange(callback: (maximized: boolean) => void): () => void
+}
+
 export interface Api {
   openFileDialog(): Promise<string[]>
   importBooks(paths: string[]): Promise<ImportResult[]>
@@ -94,6 +140,13 @@ export interface Api {
   updateToc(bookId: string, options: TocUpdateOptions): Promise<ChapterMeta[]>
   deleteBook(id: string): Promise<void>
   quitAndInstall(): Promise<void>
-  /** 订阅自动更新事件（available: 发现新版本 / downloaded: 下载完成），返回取消订阅函数 */
-  onUpdateEvent(callback: (event: 'available' | 'downloaded') => void): () => void
+  getSettings(): Promise<AppSettings>
+  setSettings(patch: Partial<AppSettings>): Promise<AppSettings>
+  checkForUpdates(): Promise<UpdateState>
+  getUpdateState(): Promise<UpdateState>
+  /** 订阅更新状态事件，返回取消订阅函数 */
+  onUpdateState(callback: (state: UpdateState) => void): () => void
+  getAppInfo(): Promise<AppInfo>
+  openLibrary(): Promise<void>
+  windowControls: WindowControlsApi
 }

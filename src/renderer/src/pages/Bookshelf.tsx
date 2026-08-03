@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { BookshelfItem } from '../../../shared/types'
+import type { BookshelfItem, UpdateMode, UpdateState } from '../../../shared/types'
+import type { UiThemeMode } from '../lib/ui-theme'
 import { CoverPlaceholder } from '../components/CoverPlaceholder'
 import { fileUrl } from '../lib/file-url'
 import {
@@ -8,15 +9,29 @@ import {
   type ShelfFormatFilter,
   type ShelfSort
 } from '../lib/shelf'
+import AppMenu from '../components/AppMenu'
+import AboutDialog from '../components/AboutDialog'
+import UpdateBar from '../components/UpdateBar'
+import WindowControls from '../components/WindowControls'
 
-export default function Bookshelf({ onOpen }: { onOpen: (id: string) => void }) {
+export default function Bookshelf({
+  onOpen,
+  uiTheme,
+  onUiThemeChange
+}: {
+  onOpen: (id: string) => void
+  uiTheme: UiThemeMode
+  onUiThemeChange: (mode: UiThemeMode) => void
+}) {
   const [books, setBooks] = useState<BookshelfItem[]>([])
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [format, setFormat] = useState<ShelfFormatFilter>('all')
   const [sort, setSort] = useState<ShelfSort>('recent')
-  const [updateState, setUpdateState] = useState<'available' | 'downloaded' | null>(null)
+  const [updateState, setUpdateState] = useState<UpdateState>({ phase: 'idle' })
+  const [updateMode, setUpdateMode] = useState<UpdateMode>('auto')
+  const [aboutOpen, setAboutOpen] = useState(false)
 
   const refresh = useCallback(async () => {
     setBooks(await window.api.getBooks())
@@ -27,7 +42,27 @@ export default function Bookshelf({ onOpen }: { onOpen: (id: string) => void }) 
     void refresh()
   }, [refresh])
 
-  useEffect(() => window.api.onUpdateEvent((e) => setUpdateState(e)), [])
+  useEffect(() => {
+    void window.api.getSettings().then((s) => setUpdateMode(s.updateMode))
+    void window.api.getUpdateState().then(setUpdateState)
+    return window.api.onUpdateState(setUpdateState)
+  }, [])
+
+  // 手动检查后“已是最新版本”的提示短暂显示后自动消失
+  useEffect(() => {
+    if (updateState.phase !== 'latest') return
+    const timer = window.setTimeout(() => setUpdateState({ phase: 'idle' }), 3000)
+    return () => window.clearTimeout(timer)
+  }, [updateState.phase])
+
+  const handleCheckUpdate = async (): Promise<void> => {
+    setUpdateState(await window.api.checkForUpdates())
+  }
+
+  const handleUpdateModeChange = async (mode: UpdateMode): Promise<void> => {
+    const next = await window.api.setSettings({ updateMode: mode })
+    setUpdateMode(next.updateMode)
+  }
 
   const showNotice = (msg: string): void => {
     setNotice(msg)
@@ -65,9 +100,21 @@ export default function Bookshelf({ onOpen }: { onOpen: (id: string) => void }) 
     <div className="shelf">
       <header className="shelf-header">
         <h1>CatReader</h1>
-        <button className="btn primary" onClick={() => void handleImport()}>
-          导入小说
-        </button>
+        <div className="shelf-header-actions">
+          <button className="btn primary" onClick={() => void handleImport()}>
+            导入小说
+          </button>
+          <AppMenu
+            uiTheme={uiTheme}
+            onUiThemeChange={onUiThemeChange}
+            updateMode={updateMode}
+            onUpdateModeChange={(m) => void handleUpdateModeChange(m)}
+            updateState={updateState}
+            onCheckUpdate={() => void handleCheckUpdate()}
+            onAbout={() => setAboutOpen(true)}
+          />
+          <WindowControls />
+        </div>
       </header>
       {books.length > 0 && (
         <div className="shelf-toolbar">
@@ -117,18 +164,12 @@ export default function Bookshelf({ onOpen }: { onOpen: (id: string) => void }) 
         </div>
       )}
       {notice && <div className="notice">{notice}</div>}
-      {updateState && (
-        <div className="update-bar">
-          <span>
-            {updateState === 'available' ? '发现新版本，正在后台下载…' : '新版本已下载，重启后生效'}
-          </span>
-          {updateState === 'downloaded' && (
-            <button className="btn small" onClick={() => void window.api.quitAndInstall()}>
-              立即重启
-            </button>
-          )}
-        </div>
-      )}
+      <UpdateBar
+        state={updateState}
+        onRestart={() => void window.api.quitAndInstall()}
+        onRetry={() => void handleCheckUpdate()}
+      />
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
       {loading ? (
         <p className="empty">加载中…</p>
       ) : books.length === 0 ? (

@@ -15,6 +15,7 @@ import {
 } from '../lib/reader-presets'
 import TocEditor from '../components/TocEditor'
 import SettingsPanel from '../components/SettingsPanel'
+import WindowControls from '../components/WindowControls'
 import type { InsertPosition } from '../components/TocEditor'
 import type { UiThemeMode } from '../lib/ui-theme'
 
@@ -358,6 +359,7 @@ export default function Reader({
           <button className="btn small" onClick={() => setSettingsOpen(true)}>
             设置
           </button>
+          <WindowControls />
         </div>
       </header>
 

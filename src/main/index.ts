@@ -1,5 +1,4 @@
 import { app, shell, BrowserWindow, protocol } from 'electron'
-import { autoUpdater } from 'electron-updater'
 import { readFile } from 'fs/promises'
 import { extname, join, resolve } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -8,6 +7,8 @@ import { ProgressStore } from './stores/progress-store'
 import { TextCache } from './services/text-cache'
 import { ImportService } from './import-service'
 import { registerIpc } from './ipc'
+import { SettingsStore } from './stores/settings-store'
+import { initUpdater } from './updater'
 
 const IMAGE_MIME: Record<string, string> = {
   '.jpg': 'image/jpeg',
@@ -39,6 +40,7 @@ function createWindow(): void {
     width: 900,
     height: 670,
     show: false,
+    frame: false,
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -48,6 +50,13 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+  })
+
+  mainWindow.on('maximize', () => {
+    mainWindow.webContents.send('window:maximized-changed', true)
+  })
+  mainWindow.on('unmaximize', () => {
+    mainWindow.webContents.send('window:maximized-changed', false)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -95,21 +104,12 @@ app.whenReady().then(() => {
   const bookStore = new BookStore(libraryRoot)
   const progressStore = new ProgressStore(join(libraryRoot, 'progress.json'))
   const importService = new ImportService(bookStore, progressStore, new TextCache())
-  registerIpc({ bookStore, progressStore, importService })
+  const settingsStore = new SettingsStore(app.getPath('userData'))
+  registerIpc({ bookStore, progressStore, importService, settingsStore, libraryRoot })
 
-  // 自动更新：仅打包版启用；无网络或仓库无新版本时静默跳过
-  if (app.isPackaged && !process.env.CATREADER_DISABLE_UPDATES) {
-    autoUpdater.autoDownload = true
-    autoUpdater.on('update-available', () => {
-      for (const w of BrowserWindow.getAllWindows()) w.webContents.send('update:available')
-    })
-    autoUpdater.on('update-downloaded', () => {
-      for (const w of BrowserWindow.getAllWindows()) w.webContents.send('update:downloaded')
-    })
-    void autoUpdater.checkForUpdatesAndNotify().catch(() => {
-      // 静默失败
-    })
-  }
+  // 自动更新：仅打包版启用；auto 模式启动时静默检查，manual 模式仅手动检查
+  const updatesEnabled = app.isPackaged && !process.env.CATREADER_DISABLE_UPDATES
+  initUpdater(updatesEnabled, updatesEnabled && settingsStore.get().updateMode === 'auto')
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

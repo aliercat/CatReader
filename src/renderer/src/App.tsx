@@ -28,7 +28,13 @@ function App() {
       />
     )
   }
-  return <Bookshelf onOpen={(bookId) => setView({ type: 'reader', bookId })} />
+  return (
+    <Bookshelf
+      onOpen={(bookId) => setView({ type: 'reader', bookId })}
+      uiTheme={uiTheme}
+      onUiThemeChange={changeUiTheme}
+    />
+  )
 }
 
 export default App

@@ -1,6 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { Api, ChapterMeta, ImportResult, Progress, TocUpdateOptions } from '../shared/types'
+import type {
+  Api,
+  AppSettings,
+  ChapterMeta,
+  ImportResult,
+  Progress,
+  TocUpdateOptions,
+  UpdateState
+} from '../shared/types'
 
 // Custom APIs for renderer
 const api: Api = {
@@ -16,14 +24,30 @@ const api: Api = {
     ipcRenderer.invoke('books:updateToc', bookId, options),
   deleteBook: (id: string): Promise<void> => ipcRenderer.invoke('books:delete', id),
   quitAndInstall: (): Promise<void> => ipcRenderer.invoke('app:quitAndInstall'),
-  onUpdateEvent: (callback) => {
-    const onAvailable = (): void => callback('available')
-    const onDownloaded = (): void => callback('downloaded')
-    ipcRenderer.on('update:available', onAvailable)
-    ipcRenderer.on('update:downloaded', onDownloaded)
+  getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
+  setSettings: (patch: Partial<AppSettings>): Promise<AppSettings> => ipcRenderer.invoke('settings:set', patch),
+  checkForUpdates: (): Promise<UpdateState> => ipcRenderer.invoke('update:check'),
+  getUpdateState: (): Promise<UpdateState> => ipcRenderer.invoke('update:getState'),
+  onUpdateState: (callback) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: UpdateState): void => callback(state)
+    ipcRenderer.on('update:state', handler)
     return () => {
-      ipcRenderer.removeListener('update:available', onAvailable)
-      ipcRenderer.removeListener('update:downloaded', onDownloaded)
+      ipcRenderer.removeListener('update:state', handler)
+    }
+  },
+  getAppInfo: () => ipcRenderer.invoke('app:getInfo'),
+  openLibrary: (): Promise<void> => ipcRenderer.invoke('app:openLibrary'),
+  windowControls: {
+    minimize: (): Promise<void> => ipcRenderer.invoke('window:minimize'),
+    toggleMaximize: (): Promise<void> => ipcRenderer.invoke('window:toggleMaximize'),
+    close: (): Promise<void> => ipcRenderer.invoke('window:close'),
+    isMaximized: (): Promise<boolean> => ipcRenderer.invoke('window:isMaximized'),
+    onMaximizedChange: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, maximized: boolean): void => callback(maximized)
+      ipcRenderer.on('window:maximized-changed', handler)
+      return () => {
+        ipcRenderer.removeListener('window:maximized-changed', handler)
+      }
     }
   }
 }
