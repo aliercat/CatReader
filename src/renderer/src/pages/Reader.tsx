@@ -9,7 +9,7 @@ const DEFAULT_LINE_HEIGHT = 1.8
 const DEFAULT_PAGE_WIDTH = 720
 const DEFAULT_COLUMNS = 1
 const COLUMN_GAP = 24
-const PAGE_HEIGHT_MARGIN = 240
+const PAGE_MIN_HEIGHT = 200
 
 export default function Reader({ bookId, onBack }: { bookId: string; onBack: () => void }) {
   const [detail, setDetail] = useState<BookDetail | null>(null)
@@ -23,6 +23,8 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   const [showToc, setShowToc] = useState(false)
   const [showTocEditor, setShowTocEditor] = useState(false)
   const measureRef = useRef<HTMLDivElement>(null)
+  const pageRef = useRef<HTMLElement | null>(null)
+  const [pageHeight, setPageHeight] = useState(600)
 
   useEffect(() => {
     void (async () => {
@@ -50,7 +52,21 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     }
   }, [detail, bookId, chapterIndex])
 
-  const pageHeight = Math.max(360, window.innerHeight - PAGE_HEIGHT_MARGIN)
+  // Paginate against the real on-screen page container height so the text
+  // fills the whole reading area instead of leaving a blank band at the bottom.
+  useEffect(() => {
+    const update = (): void => {
+      const el = pageRef.current
+      if (el) setPageHeight(Math.max(PAGE_MIN_HEIGHT, el.clientHeight - 2))
+    }
+    update()
+    const timer = window.setTimeout(update, 120)
+    window.addEventListener('resize', update)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('resize', update)
+    }
+  }, [])
 
   const measure = useCallback(
     (t: string): number => {
@@ -218,6 +234,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       <div className="reader-body">
         <button className="page-zone left" onClick={prevPage} aria-label="上一页" />
         <main
+          ref={pageRef}
           className="reader-page"
           style={{ maxWidth: pageWidth, columnCount: columns, columnGap: `${COLUMN_GAP}px` }}
         >
