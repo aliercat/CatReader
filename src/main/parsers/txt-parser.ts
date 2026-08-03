@@ -78,13 +78,22 @@ export function chapterContent(text: string, entry: ChapterEntry): string {
  * 只有第一行与标题完全一致时才剥离，避免误删正文内容。
  */
 export function stripLeadingTitle(content: string, title: string): string {
-  const trimmed = content.trimStart()
   const trimmedTitle = title.trim()
-  if (!trimmed || !trimmedTitle) return content
-  const newline = trimmed.search(/[\r\n]/)
-  const firstLine = (newline === -1 ? trimmed : trimmed.slice(0, newline)).trim()
-  if (firstLine !== trimmedTitle) return content
-  return newline === -1 ? '' : trimmed.slice(newline).trimStart()
+  let rest = content.trimStart()
+  if (!rest || !trimmedTitle) return content
+  let changed = false
+  for (;;) {
+    const newline = rest.search(/[\r\n]/)
+    const firstLine = (newline === -1 ? rest : rest.slice(0, newline)).trim()
+    if (firstLine !== trimmedTitle) break
+    changed = true
+    if (newline === -1) {
+      rest = ''
+      break
+    }
+    rest = rest.slice(newline).trimStart()
+  }
+  return changed ? rest : content
 }
 
 /**

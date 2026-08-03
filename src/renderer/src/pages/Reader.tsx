@@ -69,8 +69,10 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   }, [detail, bookId, chapterIndex])
 
   // Paginate against the real on-screen page container size so the text fills
-  // the reading area and columns never overflow when the window is narrow or
-  // when the page-width setting changes.
+  // the reading area and columns never overflow. A ResizeObserver keeps the
+  // measurement in sync with the actual container, which may not be mounted
+  // yet on the first effect run (large books load slowly) or may resize when
+  // the window / topbar / page-width changes.
   useLayoutEffect(() => {
     const update = (): void => {
       const el = pageRef.current
@@ -80,13 +82,14 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       }
     }
     update()
-    const timer = window.setTimeout(update, 120)
-    window.addEventListener('resize', update)
-    return () => {
-      window.clearTimeout(timer)
-      window.removeEventListener('resize', update)
+    const el = pageRef.current
+    if (el) {
+      const observer = new ResizeObserver(update)
+      observer.observe(el)
+      return () => observer.disconnect()
     }
-  }, [pageWidth])
+    return undefined
+  }, [pageWidth, detail])
 
   const measure = useCallback(
     (t: string): number => {

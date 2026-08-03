@@ -97,4 +97,10 @@ describe('stripLeadingTitle', () => {
   it('does not strip a longer first line that merely starts with the title', () => {
     expect(stripLeadingTitle('第一章 开始（上）\n正文', '第一章 开始')).toBe('第一章 开始（上）\n正文')
   })
+
+  it('strips repeated leading title lines (with extra whitespace)', () => {
+    expect(stripLeadingTitle('第一章 开始\n 第一章 开始\n\n正文第一段。', '第一章 开始')).toBe(
+      '正文第一段。'
+    )
+  })
 })
