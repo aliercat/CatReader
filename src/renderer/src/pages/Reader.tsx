@@ -30,6 +30,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   const [fontFamily, setFontFamily] = useState(READER_DEFAULTS.fontFamily)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [chapterText, setChapterText] = useState('')
+  const [loadedChapterIndex, setLoadedChapterIndex] = useState(-1)
   const [showToc, setShowToc] = useState(false)
   const [showTocEditor, setShowTocEditor] = useState(false)
   const measureRef = useRef<HTMLDivElement>(null)
@@ -61,7 +62,10 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     if (!detail) return
     let cancelled = false
     void window.api.getChapter(bookId, chapterIndex).then((text) => {
-      if (!cancelled) setChapterText(text ?? '')
+      if (!cancelled) {
+        setChapterText(text ?? '')
+        setLoadedChapterIndex(chapterIndex)
+      }
     })
     return () => {
       cancelled = true
@@ -115,15 +119,19 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
 
   const chapters = detail?.chapters ?? []
   const isCoverChapter = chapters[chapterIndex]?.isCover === true
+  const chapterReady = loadedChapterIndex === chapterIndex
   const clampedPage = Math.min(pageIndex, Math.max(0, pageCount - 1))
   const chapterTitle = chapters[chapterIndex]?.title ?? ''
 
   useEffect(() => {
+    // 章节文本异步加载期间 pages 仍属于上一章，不能用它的 pageCount 去钳制页码，
+    // 否则“回到上一章最后一页”（pageIndex 暂存为 MAX_SAFE_INTEGER）会被错误收敛
+    if (loadedChapterIndex !== chapterIndex) return
     setPageIndex((p) => Math.min(p, Math.max(0, pageCount - 1)))
-  }, [pageCount, chapterIndex])
+  }, [pageCount, chapterIndex, loadedChapterIndex])
 
   useEffect(() => {
-    if (!detail) return
+    if (!detail || !chapterReady) return
     const timer = window.setTimeout(() => {
       void window.api.saveProgress(bookId, {
         chapterIndex,
@@ -147,7 +155,8 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     pageWidth,
     columns,
     themeId,
-    fontFamily
+    fontFamily,
+    chapterReady
   ])
 
   const goToChapter = (i: number, toLast = false): void => {
@@ -289,6 +298,8 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
             ) : (
               <div className="reader-cover-fallback">{detail.book.title}</div>
             )
+          ) : !chapterReady ? (
+            <p className="reader-text reader-text-loading">加载中…</p>
           ) : (
             <p
               className="reader-text"

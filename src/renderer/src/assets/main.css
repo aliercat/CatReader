@@ -271,6 +271,10 @@ button {
   word-break: break-word;
 }
 
+.reader-text-loading {
+  color: var(--muted);
+}
+
 .reader-page.cover {
   padding: 24px;
 }

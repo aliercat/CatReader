@@ -73,27 +73,28 @@ export function chapterContent(text: string, entry: ChapterEntry): string {
 }
 
 /**
- * 去掉章节正文开头与章节标题重复的行。
- * 顶栏已经显示章节名，正文里再出现一次标题会显得重复；
- * 只有第一行与标题完全一致时才剥离，避免误删正文内容。
+ * 规范化章节正文开头：保留第一个标题行（标题+正文的阅读样式），
+ * 只去掉之后连续重复的标题行（部分 epub 会在页头再印一次章节名）。
+ * 仅当行内容与标题完全一致时才去重，避免误删正文。
  */
-export function stripLeadingTitle(content: string, title: string): string {
+export function dedupeLeadingTitle(content: string, title: string): string {
   const trimmedTitle = title.trim()
-  let rest = content.trimStart()
+  const rest = content.trimStart()
   if (!rest || !trimmedTitle) return content
-  let changed = false
+  const newline = rest.search(/[\r\n]/)
+  const firstLine = (newline === -1 ? rest : rest.slice(0, newline)).trim()
+  if (firstLine !== trimmedTitle) return content
+
+  let after = newline === -1 ? '' : rest.slice(newline)
   for (;;) {
-    const newline = rest.search(/[\r\n]/)
-    const firstLine = (newline === -1 ? rest : rest.slice(0, newline)).trim()
-    if (firstLine !== trimmedTitle) break
-    changed = true
-    if (newline === -1) {
-      rest = ''
-      break
-    }
-    rest = rest.slice(newline).trimStart()
+    const next = after.trimStart()
+    if (!next) break
+    const n = next.search(/[\r\n]/)
+    const line = (n === -1 ? next : next.slice(0, n)).trim()
+    if (line !== trimmedTitle) break
+    after = n === -1 ? '' : next.slice(n)
   }
-  return changed ? rest : content
+  return rest.slice(0, newline === -1 ? rest.length : newline) + after
 }
 
 /**
