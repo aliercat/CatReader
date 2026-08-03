@@ -23,6 +23,8 @@ Thumbs.db
 
 # tooling cache
 .eslintcache
+test-results/
+playwright-report/
 
 # workspace scratch
 work/

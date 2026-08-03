@@ -45,7 +45,8 @@ app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.catreader.app')
 
-  const libraryRoot = join(app.getPath('userData'), 'library')
+  // Allow tests / portable runs to redirect the library to a custom directory
+  const libraryRoot = process.env.CATREADER_LIBRARY_DIR ?? join(app.getPath('userData'), 'library')
   const bookStore = new BookStore(libraryRoot)
   const progressStore = new ProgressStore(join(libraryRoot, 'progress.json'))
   const importService = new ImportService(bookStore, progressStore, new TextCache())

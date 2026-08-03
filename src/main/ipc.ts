@@ -55,6 +55,14 @@ export function registerIpc({ bookStore, progressStore, importService }: Service
     const text = importService.getFullText(bookId)
     if (text === null) throw new Error('无法读取书籍内容')
 
+    if (options.chapters) {
+      const chapters = options.chapters
+      if (!Array.isArray(chapters) || chapters.length === 0) throw new Error('章节列表为空')
+      bookStore.writeChapters(bookId, { source: 'txt', fallback: false, chapters })
+      bookStore.update(bookId, { chapterCount: chapters.length, fallbackToc: false })
+      return chapters
+    }
+
     let result: ReturnType<typeof parseTxtToc>
     if (options.splitByLines) {
       result = { chapters: splitByLines(text), fallback: true }

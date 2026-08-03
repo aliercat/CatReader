@@ -55,6 +55,7 @@ export interface BookDetail {
 export interface TocUpdateOptions {
   presetIds?: string[]
   splitByLines?: boolean
+  chapters?: ChapterMeta[]
 }
 
 export type ImportReason = 'success' | 'duplicate' | 'unsupported' | 'read-error' | 'parse-error'
