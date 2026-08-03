@@ -348,9 +348,7 @@ export default function Reader({
         <div className="reader-title" title={chapterTitle}>
           {chapterTitle}
         </div>
-        <div className="reader-tools">
-          <WindowControls />
-        </div>
+        <WindowControls />
       </header>
 
       {findOpen && (

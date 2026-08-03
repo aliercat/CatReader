@@ -157,11 +157,8 @@ button {
 }
 
 .shelf-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 10px 12px 0 16px;
+  height: 40px;
+  padding: 0;
 }
 
 .shelf-toolbar {
@@ -369,10 +366,10 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px;
+  padding: 10px 120px 10px 16px;
   background: transparent;
   border-bottom: none;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .reader-topbar .btn,
@@ -1093,6 +1090,10 @@ mark {
 }
 
 .window-controls {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 120;
   display: flex;
   align-items: center;
   gap: 2px;
