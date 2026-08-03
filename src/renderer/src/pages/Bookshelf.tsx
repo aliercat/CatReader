@@ -181,10 +181,35 @@ export default function Bookshelf({
           <div className="book-grid">
             {visible.map((b) => (
               <div className="book-card" key={b.id}>
-                <button className="book-cover" onClick={() => onOpen(b.id)} title={`打开《${b.title}》`}>
-                  {b.coverPath ? <img src={fileUrl(b.coverPath)} alt="" /> : <CoverPlaceholder title={b.title} />}
-                  {b.readPercent != null && <span className="read-badge">已读 {b.readPercent}%</span>}
-                </button>
+                <div className="book-cover-wrap">
+                  <button className="book-cover" onClick={() => onOpen(b.id)} title={`打开《${b.title}》`}>
+                    {b.coverPath ? <img src={fileUrl(b.coverPath)} alt="" /> : <CoverPlaceholder title={b.title} />}
+                    {b.readPercent != null && <span className="read-badge">已读 {b.readPercent}%</span>}
+                  </button>
+                  <button
+                    className="book-delete"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void handleDelete(b)
+                    }}
+                    aria-label={`删除《${b.title}》`}
+                    title="删除"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    </svg>
+                  </button>
+                </div>
                 <div className="book-title" title={b.title}>
                   {b.title}
                 </div>
@@ -192,9 +217,6 @@ export default function Bookshelf({
                   <span>{b.format.toUpperCase()}</span>
                   <span>{b.chapterCount} 章</span>
                 </div>
-                <button className="book-delete" onClick={() => void handleDelete(b)}>
-                  删除
-                </button>
               </div>
             ))}
             <AddBookCard onAdd={() => void handleImport()} />

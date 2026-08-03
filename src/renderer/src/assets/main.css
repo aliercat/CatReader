@@ -200,6 +200,10 @@ button {
   text-align: center;
 }
 
+.book-cover-wrap {
+  position: relative;
+}
+
 .book-cover {
   position: relative;
   width: 150px;
@@ -292,15 +296,37 @@ button {
 }
 
 .book-delete {
-  margin-top: 6px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  background: none;
-  color: var(--muted);
-  font-size: 12px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  z-index: 2;
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease;
+}
+
+.book-card:hover .book-delete,
+.book-delete:focus-visible {
+  opacity: 1;
 }
 
 .book-delete:hover {
-  color: var(--danger);
+  background: var(--danger);
+}
+
+.book-delete svg {
+  display: block;
 }
 
 .empty {
