@@ -1104,21 +1104,6 @@ mark {
   color: #fff;
 }
 
-/* 阅读器顶栏：与 .btn.small 同一量级的紧凑尺寸 */
-.reader-topbar .window-controls {
-  border-radius: 6px;
-}
-
-.reader-topbar .wc-btn {
-  width: 26px;
-  height: 20px;
-}
-
-.reader-topbar .wc-btn svg {
-  width: 10px;
-  height: 10px;
-}
-
 /* ---------- app menu ---------- */
 .app-menu {
   position: relative;
@@ -1129,6 +1114,7 @@ mark {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  padding: 6px 8px;
 }
 
 .btn-menu svg {
@@ -1148,8 +1134,10 @@ mark {
 
 .menu-popover {
   position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: auto;
   z-index: 90;
   min-width: 300px;
   background: var(--panel);
@@ -1191,6 +1179,22 @@ mark {
   padding-top: 10px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 主界面左下角的设置入口 */
+.shelf-menu-dock {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 40;
+}
+
+/* 阅读器页脚里的齿轮按钮 */
+.btn-gear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
 }
 
 /* ---------- about dialog ---------- */

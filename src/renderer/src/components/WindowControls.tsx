@@ -20,8 +20,8 @@ function MaximizeIcon(): JSX.Element {
 function RestoreIcon(): JSX.Element {
   return (
     <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-      <rect x="2.5" y="2.5" width="6" height="6" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M4.5 4.5V2h5v5H7" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="3.5" y="1.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="1.5" y="3.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
     </svg>
   )
 }

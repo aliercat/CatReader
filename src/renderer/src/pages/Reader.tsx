@@ -16,6 +16,7 @@ import {
 import TocEditor from '../components/TocEditor'
 import SettingsPanel from '../components/SettingsPanel'
 import WindowControls from '../components/WindowControls'
+import GearIcon from '../components/GearIcon'
 import type { InsertPosition } from '../components/TocEditor'
 import type { UiThemeMode } from '../lib/ui-theme'
 
@@ -348,17 +349,11 @@ export default function Reader({
           {chapterTitle}
         </div>
         <div className="reader-tools">
-          <button className="btn small" onClick={() => setShowToc(true)}>
-            目录
-          </button>
           {detail.book.format === 'txt' && (
             <button className="btn small" onClick={() => setShowTocEditor(true)}>
               目录修正
             </button>
           )}
-          <button className="btn small" onClick={() => setSettingsOpen(true)}>
-            设置
-          </button>
           <WindowControls />
         </div>
       </header>
@@ -466,6 +461,17 @@ export default function Reader({
 
       <footer className="reader-footer">
         <div className="reader-footer-group">
+          <button className="btn small" onClick={() => setShowToc(true)}>
+            目录
+          </button>
+          <button
+            className="btn small btn-gear"
+            onClick={() => setSettingsOpen(true)}
+            aria-label="设置"
+            title="设置"
+          >
+            <GearIcon />
+          </button>
           <button className="btn small" onClick={prevChapter} disabled={chapterIndex === 0}>
             上一章
           </button>

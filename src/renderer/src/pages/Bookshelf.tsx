@@ -103,15 +103,6 @@ export default function Bookshelf({
           <button className="btn btn-import" onClick={() => void handleImport()}>
             导入小说
           </button>
-          <AppMenu
-            uiTheme={uiTheme}
-            onUiThemeChange={onUiThemeChange}
-            updateMode={updateMode}
-            onUpdateModeChange={(m) => void handleUpdateModeChange(m)}
-            updateState={updateState}
-            onCheckUpdate={() => void handleCheckUpdate()}
-            onAbout={() => setAboutOpen(true)}
-          />
         </div>
         <WindowControls />
       </header>
@@ -187,6 +178,17 @@ export default function Bookshelf({
             ))}
           </div>
         )}
+      </div>
+      <div className="shelf-menu-dock">
+        <AppMenu
+          uiTheme={uiTheme}
+          onUiThemeChange={onUiThemeChange}
+          updateMode={updateMode}
+          onUpdateModeChange={(m) => void handleUpdateModeChange(m)}
+          updateState={updateState}
+          onCheckUpdate={() => void handleCheckUpdate()}
+          onAbout={() => setAboutOpen(true)}
+        />
       </div>
       <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </div>
