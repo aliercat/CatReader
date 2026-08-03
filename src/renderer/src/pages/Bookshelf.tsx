@@ -15,6 +15,7 @@ import AboutDialog from '../components/AboutDialog'
 import UpdateBar from '../components/UpdateBar'
 import WindowControls from '../components/WindowControls'
 import Dropdown from '../components/Dropdown'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 function AddBookCard({ onAdd }: { onAdd: () => void }): JSX.Element {
   return (
@@ -53,6 +54,7 @@ export default function Bookshelf({
   const [updateState, setUpdateState] = useState<UpdateState>({ phase: 'idle' })
   const [updateMode, setUpdateMode] = useState<UpdateMode>('auto')
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<BookshelfItem | null>(null)
 
   const refresh = useCallback(async () => {
     setBooks(await window.api.getBooks())
@@ -107,8 +109,13 @@ export default function Bookshelf({
   }
 
   const handleDelete = async (b: BookshelfItem): Promise<void> => {
-    if (!window.confirm(`删除《${b.title}》？书籍文件与阅读进度将一并移除。`)) return
-    await window.api.deleteBook(b.id)
+    setDeleteTarget(b)
+  }
+
+  const confirmDelete = async (): Promise<void> => {
+    if (!deleteTarget) return
+    await window.api.deleteBook(deleteTarget.id)
+    setDeleteTarget(null)
     await refresh()
   }
 
@@ -235,6 +242,12 @@ export default function Bookshelf({
         />
       </div>
       <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        message={deleteTarget ? `删除《${deleteTarget.title}》？书籍文件与阅读进度将一并移除。` : ''}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }

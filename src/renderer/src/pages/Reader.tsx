@@ -349,11 +349,6 @@ export default function Reader({
           {chapterTitle}
         </div>
         <div className="reader-tools">
-          {detail.book.format === 'txt' && (
-            <button className="btn small" onClick={() => setShowTocEditor(true)}>
-              目录修正
-            </button>
-          )}
           <WindowControls />
         </div>
       </header>
@@ -519,6 +514,17 @@ export default function Reader({
         <aside className="toc-panel" onClick={(e) => e.stopPropagation()}>
           <div className="toc-header">
             <h3>目录</h3>
+            {detail.book.format === 'txt' && (
+              <button
+                className="btn small"
+                onClick={() => {
+                  setShowToc(false)
+                  setShowTocEditor(true)
+                }}
+              >
+                目录修正
+              </button>
+            )}
           </div>
           <input
             className="toc-search"
