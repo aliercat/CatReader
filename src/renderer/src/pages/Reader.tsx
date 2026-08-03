@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BookDetail, ChapterMeta } from '../../../shared/types'
-import { paginate } from '../lib/paginate'
+import { buildChapterPages, type ChapterPage } from '../lib/chapter-pages'
 import { fileUrl } from '../lib/file-url'
 import { filterChapters } from '../lib/chapters'
 import {
@@ -114,17 +114,19 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
     [measureWidth, fontSize, lineHeight, columns, font]
   )
 
-  const { pages, pageCount } = useMemo(
-    () => paginate(chapterText, measure, pageHeight),
-    [chapterText, measure, pageHeight]
-  )
-
   const chapters = detail?.chapters ?? []
   const isCoverChapter = chapters[chapterIndex]?.isCover === true
   const chapterReady = loadedChapterIndex === chapterIndex
-  const clampedPage = Math.min(pageIndex, Math.max(0, pageCount - 1))
   const chapterTitle = chapters[chapterIndex]?.title ?? ''
+  const chapterImages = chapters[chapterIndex]?.images ?? []
   const filteredChapters = useMemo(() => filterChapters(chapters, tocQuery), [chapters, tocQuery])
+  const pages = useMemo(
+    () => buildChapterPages(chapterText, chapterImages, measure, pageHeight),
+    [chapterText, chapterImages, measure, pageHeight]
+  )
+  const pageCount = pages.length
+  const clampedPage = Math.min(pageIndex, Math.max(0, pageCount - 1))
+  const currentPage: ChapterPage = pages[clampedPage]
 
   useEffect(() => {
     // 章节文本异步加载期间 pages 仍属于上一章，不能用它的 pageCount 去钳制页码，
@@ -268,7 +270,9 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
 
   const insertPosition: InsertPosition | null = useMemo(() => {
     if (detail?.book.format !== 'txt') return null
-    const offset = pages.slice(0, clampedPage).reduce((sum, p) => sum + p.length, 0)
+    const offset = pages
+      .slice(0, clampedPage)
+      .reduce((sum, p) => sum + (p.kind === 'text' ? p.text.length : 0), 0)
     return { chapterIndex, charOffset: offset }
   }, [detail, pages, clampedPage, chapterIndex])
 
@@ -333,13 +337,20 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
             <p key={`loading-${chapterIndex}`} className="reader-text reader-text-loading">
               加载中…
             </p>
+          ) : currentPage.kind === 'image' ? (
+            <div
+              key={`img-${chapterIndex}-${clampedPage}`}
+              className="reader-image animate-in"
+            >
+              <img src={currentPage.src} alt="" />
+            </div>
           ) : (
             <p
               key={`${chapterIndex}-${clampedPage}`}
               className="reader-text animate-in"
               style={{ fontSize: `${fontSize}px`, lineHeight, fontFamily: font.stack }}
             >
-              {pages[clampedPage]}
+              {currentPage.text}
             </p>
           )}
         </main>

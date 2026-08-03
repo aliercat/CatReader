@@ -28,6 +28,8 @@ export interface ChapterMeta {
   title: string
   /** epub：该章节是封面页（正文为空白，应显示书籍封面图） */
   isCover?: boolean
+  /** epub：正文内插图（绝对路径，顺序与 [[IMG:n]] 占位标记对应） */
+  images?: string[]
   /** txt: char offsets into the decoded text */
   charStart?: number
   charEnd?: number

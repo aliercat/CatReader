@@ -104,6 +104,28 @@ async function buildEpubWithCoverChapter(): Promise<Buffer> {
   return zip.generateAsync({ type: 'nodebuffer' })
 }
 
+async function buildEpubWithInlineImage(): Promise<Buffer> {
+  const zip = new JSZip()
+  zip.file(
+    'META-INF/container.xml',
+    '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'
+  )
+  zip.file(
+    'OEBPS/content.opf',
+    '<package xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>插图书</dc:title></metadata><manifest><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="ncx"><itemref idref="ch1"/></spine></package>'
+  )
+  zip.file(
+    'OEBPS/toc.ncx',
+    '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/"><navMap><navPoint id="n1" playOrder="1"><navLabel><text>第一章</text></navLabel><content src="ch1.xhtml"/></navPoint></navMap></ncx>'
+  )
+  zip.file(
+    'OEBPS/ch1.xhtml',
+    '<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>第一章</h1><p>第一段。</p><img src="images/pic.png" alt="插图"/><p>第二段。</p></body></html>'
+  )
+  zip.file('OEBPS/images/pic.png', PNG_BYTES)
+  return zip.generateAsync({ type: 'nodebuffer' })
+}
+
 describe('parseEpub', () => {
   it('extracts metadata, chapters and cover from a minimal epub', async () => {
     const buf = await buildEpub()
@@ -124,11 +146,25 @@ describe('parseEpub', () => {
     expect(book.chapters).toHaveLength(2)
     expect(book.chapters[0].title).toBe('封面')
     expect(book.chapters[0].isCover).toBe(true)
-    expect(book.chapters[0].content).toBe('')
+    expect(book.chapters[0].content).toBe('[[IMG:0]]')
     expect(book.chapters[1].title).toBe('第一章')
     expect(book.chapters[1].isCover).toBeUndefined()
     expect(book.cover).not.toBeNull()
     expect(book.cover!.length).toBe(PNG_BYTES.length)
+  })
+
+  it('extracts inline images and leaves placeholders in the text', async () => {
+    const book = await parseEpub(await buildEpubWithInlineImage())
+    expect(book.chapters).toHaveLength(1)
+    const ch = book.chapters[0]
+    expect(ch.title).toBe('第一章')
+    expect(ch.isCover).toBeUndefined()
+    expect(ch.images).toHaveLength(1)
+    expect(ch.images![0].name).toBe('0.png')
+    expect(ch.images![0].data.length).toBe(PNG_BYTES.length)
+    expect(ch.content).toContain('[[IMG:0]]')
+    expect(ch.content).toContain('第一段。')
+    expect(ch.content).toContain('第二段。')
   })
 
   it('rejects buffers without container.xml', async () => {

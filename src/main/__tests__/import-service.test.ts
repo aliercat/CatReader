@@ -8,6 +8,11 @@ import { ProgressStore } from '../stores/progress-store'
 import { TextCache } from '../services/text-cache'
 import { ImportService } from '../import-service'
 
+const PNG_BYTES = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFElEQVR42mP8z8Dwn4GBgYGJAQoAHgQCAf4Xm1sAAAAASUVORK5CYII=',
+  'base64'
+)
+
 let dir: string
 let importService: ImportService
 
@@ -63,6 +68,28 @@ async function makeEpubWithCoverChapter(): Promise<Buffer> {
   return zip.generateAsync({ type: 'nodebuffer' })
 }
 
+async function makeEpubWithInlineImage(): Promise<Buffer> {
+  const zip = new JSZip()
+  zip.file(
+    'META-INF/container.xml',
+    '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'
+  )
+  zip.file(
+    'OEBPS/content.opf',
+    '<package xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>插图书</dc:title></metadata><manifest><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="ncx"><itemref idref="ch1"/></spine></package>'
+  )
+  zip.file(
+    'OEBPS/toc.ncx',
+    '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/"><navMap><navPoint id="n1" playOrder="1"><navLabel><text>第一章</text></navLabel><content src="ch1.xhtml"/></navPoint></navMap></ncx>'
+  )
+  zip.file(
+    'OEBPS/ch1.xhtml',
+    '<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>第一章</h1><p>第一段。</p><img src="images/pic.png"/><p>第二段。</p></body></html>'
+  )
+  zip.file('OEBPS/images/pic.png', PNG_BYTES)
+  return zip.generateAsync({ type: 'nodebuffer' })
+}
+
 describe('ImportService', () => {
   it('imports a txt file with parsed chapters', async () => {
     const txt = join(dir, '源文件.txt')
@@ -102,7 +129,21 @@ describe('ImportService', () => {
     const chapters = importService.ensureEpubCoverFlags(id)
     expect(chapters[0].isCover).toBe(true)
     expect(chapters[1].isCover).toBeUndefined()
-    expect(importService.getChapterText(id, 0)).toBe('')
+    expect(importService.getChapterText(id, 0)).toBe('[[IMG:0]]')
+  })
+
+  it('writes inline chapter images to disk and records their paths', async () => {
+    const epub = join(dir, 'pic.epub')
+    writeFileSync(epub, await makeEpubWithInlineImage())
+    const [result] = await importService.importFiles([epub])
+    expect(result.ok).toBe(true)
+    const id = result.bookId!
+
+    const stored = JSON.parse(readFileSync(join(dir, 'books', id, 'chapters.json'), 'utf-8'))
+    expect(stored.chapters[0].images).toHaveLength(1)
+    expect(existsSync(stored.chapters[0].images[0])).toBe(true)
+    expect(importService.getChapterText(id, 0)).toContain('[[IMG:0]]')
+    expect(importService.getChapterText(id, 0)).toContain('第一段。')
   })
 
   it('rejects unsupported formats', async () => {

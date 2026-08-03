@@ -6,6 +6,8 @@ export interface EpubChapter {
   title: string
   content: string
   isCover?: boolean
+  /** 正文内插图：name 为写入章节图片目录的文件名，data 为图片字节 */
+  images?: { name: string; data: Buffer }[]
 }
 
 export interface EpubBook {
@@ -139,13 +141,52 @@ export async function parseEpub(buf: Buffer): Promise<EpubBook> {
       if (!file) return { title, content: '' }
       let finalTitle = title
       const rawHtml = await file.async('string')
-      const content = htmlToText(rawHtml)
+      // 把 <img> 替换为 [[IMG:n]] 占位标记（保留位置），图片字节单独提取
+      const images: { name: string; data: Buffer }[] = []
+      let imgIdx = 0
+      let contentHtml = ''
+      for (const part of rawHtml.split(/(<img\b[^>]*>)/gi)) {
+        if (!/^<img\b/i.test(part)) {
+          contentHtml += part
+          continue
+        }
+        const src = part.match(/\bsrc=["']([^"']+)["']/i)?.[1]
+        if (!src) {
+          contentHtml += part
+          continue
+        }
+        if (src.startsWith('data:')) {
+          const m = src.match(/^data:image\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/)
+          if (!m) {
+            contentHtml += part
+            continue
+          }
+          const ext = m[1].toLowerCase() === 'jpeg' ? 'jpg' : m[1].toLowerCase()
+          images.push({ name: `${imgIdx}.${ext}`, data: Buffer.from(m[2], 'base64') })
+          contentHtml += `\n[[IMG:${imgIdx}]]\n`
+          imgIdx++
+          continue
+        }
+        const resolved = resolvePath(opfPath, src.replace(/^\.\//, ''))
+        const imgFile = zip.file(resolved)
+        if (!imgFile) {
+          contentHtml += part
+          continue
+        }
+        const data = await imgFile.async('nodebuffer')
+        const ext = (resolved.split('.').pop() ?? 'png').toLowerCase()
+        images.push({ name: `${imgIdx}.${ext}`, data })
+        contentHtml += `\n[[IMG:${imgIdx}]]\n`
+        imgIdx++
+      }
+      const content = htmlToText(contentHtml)
       if (finalTitle === `第${i + 1}章`) {
         const heading = await detectHeading(file)
         if (heading) finalTitle = heading
       }
-      const isCover = /^(封面|封面页|cover)$/i.test(finalTitle.trim()) || (content.trim() === '' && /<img\b/i.test(rawHtml))
-      return { title: finalTitle, content, isCover: isCover || undefined }
+      const textOnly = content.replace(/\[\[IMG:\d+\]\]/g, '').trim()
+      const isCover = /^(封面|封面页|cover)$/i.test(finalTitle.trim()) || (textOnly === '' && images.length > 0)
+      return { title: finalTitle, content, isCover: isCover || undefined, images }
     })
   )
 

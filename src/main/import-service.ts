@@ -79,16 +79,23 @@ export class ImportService {
       } else {
         const book = await parseEpub(readFileSync(filePath))
         copyFileSync(filePath, join(bookDir, fileName))
-        const chapters = book.chapters.map((c, i) => ({
-          index: i,
-          title: c.title,
-          isCover: c.isCover || undefined
-        }))
         const chapterDir = join(bookDir, 'chapters')
         mkdirSync(chapterDir, { recursive: true })
-        for (const [i, c] of book.chapters.entries()) {
+        const chapters = book.chapters.map((c, i) => {
           writeFileSync(join(chapterDir, `${i}.txt`), c.content, 'utf-8')
-        }
+          let images: string[] | undefined
+          if (c.images && c.images.length > 0) {
+            const imgDir = join(chapterDir, String(i))
+            mkdirSync(imgDir, { recursive: true })
+            images = []
+            for (const img of c.images) {
+              const p = join(imgDir, img.name)
+              writeFileSync(p, img.data)
+              images.push(p)
+            }
+          }
+          return { index: i, title: c.title, isCover: c.isCover || undefined, images }
+        })
         this.bookStore.writeChapters(id, { source: 'epub', fallback: false, chapters })
         if (book.cover) {
           const coverPath = join(bookDir, 'cover.jpg')
@@ -168,7 +175,10 @@ export class ImportService {
     const bookDir = this.bookStore.getBookDir(bookId)
     const updated = chapters.map((c) => {
       const file = join(bookDir, 'chapters', `${c.index}.txt`)
-      const empty = existsSync(file) && readFileSync(file, 'utf-8').trim() === ''
+      const textOnly = existsSync(file)
+        ? readFileSync(file, 'utf-8').replace(/\[\[IMG:\d+\]\]/g, '').trim()
+        : ''
+      const empty = textOnly === ''
       const isCover = /^(封面|封面页|cover)$/i.test(c.title.trim()) || empty
       return isCover ? { ...c, isCover: true } : c
     })
