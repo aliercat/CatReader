@@ -32,3 +32,6 @@ playwright-report/
 
 # workspace scratch
 work/
+
+# local agent guidance (not published)
+AGENTS.md
