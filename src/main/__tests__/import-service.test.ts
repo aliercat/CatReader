@@ -43,6 +43,26 @@ async function makeEpub(): Promise<Buffer> {
   return zip.generateAsync({ type: 'nodebuffer' })
 }
 
+async function makeEpubWithCoverChapter(): Promise<Buffer> {
+  const zip = new JSZip()
+  zip.file(
+    'META-INF/container.xml',
+    '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'
+  )
+  zip.file(
+    'OEBPS/content.opf',
+    '<package xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>封面书</dc:title></metadata><manifest><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="ncx"><itemref idref="cover"/><itemref idref="ch1"/></spine></package>'
+  )
+  zip.file(
+    'OEBPS/toc.ncx',
+    '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/"><navMap><navPoint id="n0" playOrder="1"><navLabel><text>封面</text></navLabel><content src="cover.xhtml"/></navPoint><navPoint id="n1" playOrder="2"><navLabel><text>第一章</text></navLabel><content src="ch1.xhtml"/></navPoint></navMap></ncx>'
+  )
+  zip.file('OEBPS/cover.xhtml', '<html xmlns="http://www.w3.org/1999/xhtml"><body><img src="cover.jpg"/></body></html>')
+  zip.file('OEBPS/ch1.xhtml', '<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>第一章</h1><p>正文。</p></body></html>')
+  zip.file('OEBPS/cover.jpg', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]))
+  return zip.generateAsync({ type: 'nodebuffer' })
+}
+
 describe('ImportService', () => {
   it('imports a txt file with parsed chapters', async () => {
     const txt = join(dir, '源文件.txt')
@@ -65,6 +85,24 @@ describe('ImportService', () => {
     expect(result.ok).toBe(true)
     const id = result.bookId!
     expect(importService.getChapterText(id, 0)).toBe('导入测试内容。')
+  })
+
+  it('backfills isCover flags for epubs imported before the flag existed', async () => {
+    const epub = join(dir, 'cover.epub')
+    writeFileSync(epub, await makeEpubWithCoverChapter())
+    const [result] = await importService.importFiles([epub])
+    expect(result.ok).toBe(true)
+    const id = result.bookId!
+
+    // 模拟旧版本：存储的章节没有 isCover 标记
+    const raw = JSON.parse(readFileSync(join(dir, 'books', id, 'chapters.json'), 'utf-8'))
+    raw.chapters = raw.chapters.map((c: { index: number; title: string }) => ({ index: c.index, title: c.title }))
+    writeFileSync(join(dir, 'books', id, 'chapters.json'), JSON.stringify(raw))
+
+    const chapters = importService.ensureEpubCoverFlags(id)
+    expect(chapters[0].isCover).toBe(true)
+    expect(chapters[1].isCover).toBeUndefined()
+    expect(importService.getChapterText(id, 0)).toBe('')
   })
 
   it('rejects unsupported formats', async () => {

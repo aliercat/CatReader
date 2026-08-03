@@ -5,6 +5,7 @@ import { htmlToText } from './html'
 export interface EpubChapter {
   title: string
   content: string
+  isCover?: boolean
 }
 
 export interface EpubBook {
@@ -137,12 +138,14 @@ export async function parseEpub(buf: Buffer): Promise<EpubBook> {
       const file = zip.file(resolvePath(opfPath, String(item['@_href'] ?? '')))
       if (!file) return { title, content: '' }
       let finalTitle = title
-      const content = htmlToText(await file.async('string'))
+      const rawHtml = await file.async('string')
+      const content = htmlToText(rawHtml)
       if (finalTitle === `第${i + 1}章`) {
         const heading = await detectHeading(file)
         if (heading) finalTitle = heading
       }
-      return { title: finalTitle, content }
+      const isCover = /^(封面|封面页|cover)$/i.test(finalTitle.trim()) || (content.trim() === '' && /<img\b/i.test(rawHtml))
+      return { title: finalTitle, content, isCover: isCover || undefined }
     })
   )
 
@@ -160,6 +163,22 @@ export async function parseEpub(buf: Buffer): Promise<EpubBook> {
     const coverFile = zip.file(resolvePath(opfPath, String(coverItem['@_href'] ?? '')))
     if (coverFile) {
       cover = await coverFile.async('nodebuffer')
+    }
+  }
+  // 部分 epub 没有标准 cover 元数据，封面图就在“封面”章节里：退回提取该章节的第一张图片
+  if (cover === null) {
+    for (let i = 0; i < chapters.length && cover === null; i++) {
+      if (!chapters[i].isCover) continue
+      const coverPlan = chapterPlan[i]
+      const file = zip.file(resolvePath(opfPath, String(coverPlan.item['@_href'] ?? '')))
+      if (file) {
+        const raw = await file.async('string')
+        const src = raw.match(/<img\b[^>]*\bsrc=["']([^"']+)["']/i)?.[1]
+        if (src) {
+          const imgFile = zip.file(resolvePath(opfPath, src.replace(/^\.\//, '')))
+          if (imgFile) cover = await imgFile.async('nodebuffer')
+        }
+      }
     }
   }
 

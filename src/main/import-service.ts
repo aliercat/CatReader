@@ -1,7 +1,7 @@
 import { basename, extname, join } from 'path'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs'
 import { randomUUID } from 'crypto'
-import type { BookMeta, ImportResult } from '../shared/types'
+import type { BookMeta, ChapterMeta, ImportResult } from '../shared/types'
 import { BookStore } from './stores/book-store'
 import { ProgressStore } from './stores/progress-store'
 import { TextCache } from './services/text-cache'
@@ -79,7 +79,11 @@ export class ImportService {
       } else {
         const book = await parseEpub(readFileSync(filePath))
         copyFileSync(filePath, join(bookDir, fileName))
-        const chapters = book.chapters.map((c, i) => ({ index: i, title: c.title }))
+        const chapters = book.chapters.map((c, i) => ({
+          index: i,
+          title: c.title,
+          isCover: c.isCover || undefined
+        }))
         const chapterDir = join(bookDir, 'chapters')
         mkdirSync(chapterDir, { recursive: true })
         for (const [i, c] of book.chapters.entries()) {
@@ -149,6 +153,27 @@ export class ImportService {
       this.textCache.set(bookId, text)
     }
     return text
+  }
+
+  /**
+   * 旧版本导入的 epub 没有 isCover 标记：根据已存储的章节内容补一次。
+   * 标题为“封面/封面页/cover”或内容为空的章节视为封面页。
+   */
+  ensureEpubCoverFlags(bookId: string): ChapterMeta[] {
+    const meta = this.bookStore.get(bookId)
+    const chapters = this.bookStore.readChapters(bookId)?.chapters ?? []
+    if (!meta || meta.format !== 'epub' || chapters.length === 0 || chapters.every((c) => c.isCover !== undefined)) {
+      return chapters
+    }
+    const bookDir = this.bookStore.getBookDir(bookId)
+    const updated = chapters.map((c) => {
+      const file = join(bookDir, 'chapters', `${c.index}.txt`)
+      const empty = existsSync(file) && readFileSync(file, 'utf-8').trim() === ''
+      const isCover = /^(封面|封面页|cover)$/i.test(c.title.trim()) || empty
+      return isCover ? { ...c, isCover: true } : c
+    })
+    this.bookStore.writeChapters(bookId, { source: 'epub', fallback: false, chapters: updated })
+    return updated
   }
 
   deleteBook(bookId: string): void {

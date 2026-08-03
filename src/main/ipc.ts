@@ -32,9 +32,10 @@ export function registerIpc({ bookStore, progressStore, importService }: Service
   ipcMain.handle('books:open', (_event, id: string) => {
     const book = bookStore.get(id)
     if (!book) throw new Error('书籍不存在')
+    const chapters = importService.ensureEpubCoverFlags(id)
     return {
       book,
-      chapters: bookStore.readChapters(id)?.chapters ?? [],
+      chapters,
       progress: progressStore.get(id)
     }
   })

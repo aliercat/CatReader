@@ -26,6 +26,8 @@ export interface BookMeta {
 export interface ChapterMeta {
   index: number
   title: string
+  /** epub：该章节是封面页（正文为空白，应显示书籍封面图） */
+  isCover?: boolean
   /** txt: char offsets into the decoded text */
   charStart?: number
   charEnd?: number

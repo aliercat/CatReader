@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BookDetail, ChapterMeta } from '../../../shared/types'
 import { paginate } from '../lib/paginate'
+import { fileUrl } from '../lib/file-url'
 import {
   READER_DEFAULTS,
   clampNumber,
@@ -110,6 +111,7 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
   )
 
   const chapters = detail?.chapters ?? []
+  const isCoverChapter = chapters[chapterIndex]?.isCover === true
   const clampedPage = Math.min(pageIndex, Math.max(0, pageCount - 1))
   const chapterTitle = chapters[chapterIndex]?.title ?? ''
 
@@ -267,21 +269,31 @@ export default function Reader({ bookId, onBack }: { bookId: string; onBack: () 
       <div className="reader-body" onClick={onBodyClick}>
         <main
           ref={pageRef}
-          className="reader-page"
+          className={`reader-page${isCoverChapter ? ' cover' : ''}`}
           style={{
             maxWidth: pageWidth,
-            columnCount: columns,
-            columnGap: `${COLUMN_GAP}px`,
+            columnCount: isCoverChapter ? 'auto' : columns,
+            columnGap: isCoverChapter ? 'normal' : `${COLUMN_GAP}px`,
             background: theme.bg,
             color: theme.text
           }}
         >
-          <p
-            className="reader-text"
-            style={{ fontSize: `${fontSize}px`, lineHeight, fontFamily: font.stack }}
-          >
-            {pages[clampedPage]}
-          </p>
+          {isCoverChapter ? (
+            detail.book.coverPath ? (
+              <div className="reader-cover">
+                <img src={fileUrl(detail.book.coverPath)} alt="" />
+              </div>
+            ) : (
+              <div className="reader-cover-fallback">{detail.book.title}</div>
+            )
+          ) : (
+            <p
+              className="reader-text"
+              style={{ fontSize: `${fontSize}px`, lineHeight, fontFamily: font.stack }}
+            >
+              {pages[clampedPage]}
+            </p>
+          )}
         </main>
       </div>
 
